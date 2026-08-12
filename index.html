@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | Secure Access</title>
+    <link rel="stylesheet" href="css/global.css">
+</head>
+
+<body>
+
+    <main class="auth-wrapper">
+        <section class="auth-card">
+            <div class="auth-header">
+                <h1>NexoraCore</h1>
+                <p>Enterprise Resource Planning</p>
+            </div>
+
+            <!-- The Secure Auth Form -->
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="empId">Employee ID</label>
+                    <input type="text" id="empId" required autocomplete="off" placeholder="Enter ID">
+                </div>
+
+                <div class="input-group">
+                    <label for="authKey">Access Key</label>
+                    <input type="password" id="authKey" required placeholder="Enter Passkey">
+                </div>
+
+                <button type="submit" class="btn-primary">Authenticate</button>
+
+                <!-- Placeholder for future error handling -->
+                <p id="errorMsg" style="display: none; color: red;"></p>
+            </form>
+        </section>
+    </main>
+
+    <!-- Decoupled Authentication Logic -->
+    <script src="js/auth.js"></script>
+</body>
+
+</html>
