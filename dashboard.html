@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | MD Dashboard</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+<body>
+
+    <div class="dashboard-layout">
+        <!-- 1. SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>NexoraCore</h2>
+            </div>
+            <nav class="side-nav">
+                <a href="#" class="active">Overview</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="#">Production Logs</a>
+            </nav>
+            <div class="logout-section">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <!-- 2. MAIN CONTENT AREA -->
+        <div class="main-wrapper">
+            
+            <!-- TOP HEADER -->
+            <header class="topbar">
+                <h3>Dashboard Overview</h3>
+                <div class="user-profile">
+                    <span id="userNameDisplay">Welcome, MD001</span>
+                </div>
+            </header>
+
+            <!-- MAIN GRID CONTENT -->
+            <main class="content-area">
+                
+                <!-- Analytics Cards -->
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <p class="stat-title">Active Tasks</p>
+                        <h3 class="stat-value" id="activeTasksCount">--</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-title">Delayed Tasks (Alerts)</p>
+                        <h3 class="stat-value danger-text" id="delayedTasksCount">--</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-title">Production Pass</p>
+                        <h3 class="stat-value success-text" id="passCount">--</h3>
+                    </div>
+                    <div class="stat-card">
+                        <p class="stat-title">Production Fail</p>
+                        <h3 class="stat-value danger-text" id="failCount">--</h3>
+                    </div>
+                </section>
+
+                <!-- Recent Activities Section -->
+                <section class="recent-activities">
+                    <div class="card-header">
+                        <h4>Recent Workflow Updates</h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Task</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTasksTable">
+                                <!-- Data will be injected here via JS -->
+                                <tr>
+                                    <td colspan="4" style="text-align:center; padding:20px;">Fetching live data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- UI Logic and Security Lock -->
+    <script src="js/ui-handler.js"></script>
+</body>
+</html>
