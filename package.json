@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/Omsaraiya/NexoraCore#readme",
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "googleapis": "^174.0.1"
   }
 }
