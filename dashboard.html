@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexoraCore | MD Dashboard</title>
+    <title>NexoraCore | Enterprise Dashboard</title>
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/layout.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -22,64 +23,102 @@
                 <a href="#">Production Logs</a>
             </nav>
             <div class="logout-section">
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
+                <button id="logoutBtn" class="btn-secondary">Sign Out</button>
             </div>
         </aside>
 
         <div class="main-wrapper">
 
             <header class="topbar">
-                <h3>Dashboard Overview</h3>
-                <div class="user-profile">
-                    <span id="userNameDisplay">Welcome, MD001</span>
+                <h3 style="font-size: 18px; font-weight: 600;">Workspace Overview</h3>
+
+                <div class="topbar-actions">
+                    <div class="notification-bell" id="notificationBtn" title="Alerts">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                            </path>
+                        </svg>
+                        <span class="badge" id="alertBadge">!</span>
+                    </div>
+
+                    <div class="user-profile" style="font-size: 14px; font-weight: 500;">
+                        <span id="userNameDisplay">Welcome, MD001</span>
+                    </div>
                 </div>
             </header>
 
             <main class="content-area">
 
-                <!-- Analytics Cards -->
                 <section class="stats-grid">
                     <div class="stat-card">
                         <p class="stat-title">Active Tasks</p>
                         <h3 class="stat-value" id="activeTasksCount">--</h3>
                     </div>
                     <div class="stat-card">
-                        <p class="stat-title">Delayed Tasks (Alerts)</p>
-                        <h3 class="stat-value danger-text" id="delayedTasksCount">--</h3>
+                        <p class="stat-title">Overdue Alerts</p>
+                        <h3 class="stat-value" id="delayedTasksCount" style="color: var(--danger-text);">--</h3>
                     </div>
                     <div class="stat-card">
-                        <p class="stat-title">Production Pass</p>
-                        <h3 class="stat-value success-text" id="passCount">--</h3>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-title">Production Fail</p>
-                        <h3 class="stat-value danger-text" id="failCount">--</h3>
+                        <p class="stat-title">System Health</p>
+                        <h3 class="stat-value" style="color: var(--success-text);">99.8%</h3>
                     </div>
                 </section>
 
-                <section class="recent-activities">
-                    <div class="card-header">
-                        <h4>Recent Workflow Updates</h4>
-                    </div>
-                    <div class="card-body">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Task</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recentTasksTable">
-                                <tr>
-                                    <td colspan="4" style="text-align:center; padding:20px;">Fetching live data...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                <div class="dashboard-grid">
 
+                    <section class="panel-card">
+                        <div class="panel-header">
+                            <h4>Analytics</h4>
+                            <button class="icon-btn" title="Expand Chart">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div style="padding: 20px; height: 300px; width: 100%;">
+                            <canvas id="workflowChart"></canvas>
+                        </div>
+                    </section>
+
+                    <section class="panel-card">
+                        <div class="panel-header">
+                            <h4>Live Workflow Ledger</h4>
+                            <button class="icon-btn" title="Sync Data">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Task</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTasksTable">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center; padding:30px;">Fetching secure data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                </div>
             </main>
         </div>
     </div>

@@ -14,3 +14,33 @@ async function fetchDashboardStats() {
         return null;
     }
 }
+
+
+async function createNewTask(taskData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(taskData)
+        });
+
+        return await response.json();
+    } catch (error) {
+        console.error("API Post Error:", error);
+        return { success: false, error: "Network failed" };
+    }
+}
+
+async function markTaskCompleted(rowIndex) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/complete`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rowIndex: rowIndex })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("API Update Error:", error);
+        return { success: false };
+    }
+}
