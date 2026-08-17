@@ -225,4 +225,49 @@ if (window.location.pathname.includes('tasks.html')) {
             event.target.disabled = false;
         }
     };
+
+    async function populateEmployeeDropdown() {
+        const empSelect = document.getElementById('empName');
+        if (!empSelect) return;
+
+        const employees = await fetchEmployees();
+        empSelect.innerHTML = '<option value="">-- Select Employee --</option>'; // Reset
+
+        employees.forEach(emp => {
+            if (emp[1]) {
+                const option = document.createElement('option');
+                option.value = emp[1];
+                option.textContent = `${emp[1]} (${emp[2] || 'Staff'})`;
+                empSelect.appendChild(option);
+            }
+        });
+    }
+
+    populateEmployeeDropdown();
+
+    window.exportTableToCSV = function (filename) {
+        const table = document.querySelector(".data-table");
+        let csv = [];
+
+        const rows = table.querySelectorAll("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("td, th");
+
+            for (let j = 0; j < cols.length; j++) {
+                let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/,/g, "");
+                row.push(data);
+            }
+            csv.push(row.join(","));
+        }
+
+        const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+        const downloadLink = document.createElement("a");
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
 }

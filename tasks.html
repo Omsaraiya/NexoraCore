@@ -53,7 +53,7 @@
             <nav class="side-nav">
                 <a href="dashboard.html">Overview</a>
                 <a href="tasks.html" class="active">Task Manager</a>
-                <a href="#">Production Logs</a>
+                <a href="production.html">Production Logs</a>
             </nav>
             <div class="logout-section">
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
@@ -70,8 +70,10 @@
                 <section class="form-card">
                     <form id="taskForm" class="form-grid">
                         <div class="form-group">
-                            <label>Employee Name</label>
-                            <input type="text" id="empName" required placeholder="e.g. Rahul Sharma">
+                            <label>Assign To (Employee)</label>
+                            <select id="empName" required>
+                                <option value="">Loading employees...</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Task Description</label>

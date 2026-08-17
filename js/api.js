@@ -44,3 +44,14 @@ async function markTaskCompleted(rowIndex) {
         return { success: false };
     }
 }
+
+async function fetchEmployees() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/employees`);
+        const result = await response.json();
+        return result.success ? result.data : [];
+    } catch (error) {
+        console.error("Failed to fetch employees:", error);
+        return [];
+    }
+}

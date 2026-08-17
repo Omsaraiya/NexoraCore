@@ -34,13 +34,26 @@
 
             <main class="content-area">
                 <section class="panel-card" style="padding: 20px;">
-                    <div class="panel-header" style="margin-bottom: 20px; border: none;">
-                        <h4>Complete Master Ledger</h4>
-                        <p style="font-size: 13px; color: var(--text-muted);">Read-only view of all database entries.
-                        </p>
+
+                    <div class="panel-header"
+                        style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="margin: 0; font-size: 16px; color: var(--text-main);">Complete Master Ledger</h4>
+                            <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted);">Read-only view of
+                                all database entries.</p>
+                        </div>
+                        <button onclick="exportTableToCSV('NexoraCore_Production_Logs.csv')"
+                            style="padding: 8px 15px; font-size: 13px; background-color: var(--primary-blue); color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export to CSV
+                        </button>
                     </div>
 
-                    <div class="table-container" style="max-height: 600px;">
+                    <div class="table-container" style="max-height: 600px; overflow-y: auto;">
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -53,7 +66,8 @@
                             </thead>
                             <tbody id="productionTableBody">
                                 <tr>
-                                    <td colspan="5" style="text-align:center;">Fetching master logs...</td>
+                                    <td colspan="5" style="text-align:center; padding: 20px;">Fetching master logs...
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -78,12 +92,19 @@
             tbody.innerHTML = '';
             data.forEach((row) => {
                 const tr = document.createElement('tr');
-                const auditTime = row[4] ? `<span style="color: #16a34a; font-size: 12px;">${row[4]}</span>` : '<span style="color: #94a3b8; font-size: 12px;">Pending</span>';
+                const auditTime = row[4] ? `<span style="color: #16a34a; font-size: 12px; font-weight: 500;">${row[4]}</span>` : '<span style="color: #94a3b8; font-size: 12px;">Pending</span>';
+
+                let statusStyle = '';
+                if (row[2] === 'Completed') {
+                    statusStyle = '<span style="color: #16a34a; background: #dcfce7; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completed</span>';
+                } else {
+                    statusStyle = '<span style="color: #ea580c; background: #ffedd5; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Pending</span>';
+                }
 
                 tr.innerHTML = `
                     <td><strong>${row[0] || 'N/A'}</strong></td>
                     <td>${row[1] || 'N/A'}</td>
-                    <td>${row[2] || 'N/A'}</td>
+                    <td>${statusStyle}</td>
                     <td>${row[3] || 'N/A'}</td>
                     <td>${auditTime}</td>
                 `;

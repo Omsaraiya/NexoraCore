@@ -93,6 +93,26 @@ app.put('/api/tasks/complete', async (req, res) => {
     }
 });
 
+app.get('/api/employees', async (req, res) => {
+    try {
+        const opt = {
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Employees!A2:C'
+        };
+
+        let data = await gsapi.spreadsheets.values.get(opt);
+
+        res.status(200).json({
+            success: true,
+            data: data.data.values || []
+        });
+
+    } catch (error) {
+        console.error("API Error fetching employees:", error.message);
+        res.status(500).json({ success: false, error: "Failed to fetch employees" });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 NexoraCore API Server running on http://localhost:${PORT}`);
 });
