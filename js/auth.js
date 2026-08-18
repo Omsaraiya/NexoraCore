@@ -1,21 +1,37 @@
-document.getElementById('loginForm').addEventListener('submit', function (event) {
-    event.preventDefault();
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
 
-    const empId = document.getElementById('empId').value.trim();
-    const authKey = document.getElementById('authKey').value.trim();
-    const errorMsg = document.getElementById('errorMsg');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
 
-    errorMsg.style.display = 'none';
+            const id = document.getElementById('empId').value.trim();
+            const pass = document.getElementById('authKey').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const btn = document.querySelector('.btn-primary');
 
-    if (empId === 'MD001' && authKey === 'admin123') {
+            btn.textContent = "Authenticating...";
+            btn.disabled = true;
+            errorMsg.style.display = 'none';
 
-        localStorage.setItem('nexora_session_role', 'super_admin');
-        localStorage.setItem('nexora_session_id', empId);
-
-        window.location.href = 'dashboard.html';
-
-    } else {
-        errorMsg.textContent = 'Invalid Employee ID or Access Key. Access Denied.';
-        errorMsg.style.display = 'block';
+            setTimeout(() => {
+                if (id === 'MD001' && pass === 'admin123') {
+                    localStorage.setItem('nexora_session_role', 'super_admin');
+                    localStorage.setItem('nexora_user_id', 'MD001');
+                    window.location.href = 'dashboard.html';
+                }
+                else if (id === 'STAFF' && pass === 'staff123') {
+                    localStorage.setItem('nexora_session_role', 'operator');
+                    localStorage.setItem('nexora_user_id', 'Staff');
+                    window.location.href = 'tasks.html';
+                }
+                else {
+                    errorMsg.textContent = "Invalid Credentials. Access Denied.";
+                    errorMsg.style.display = 'block';
+                    btn.textContent = "Authenticate";
+                    btn.disabled = false;
+                }
+            }, 800);
+        });
     }
 });

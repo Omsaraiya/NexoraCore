@@ -1,273 +1,171 @@
-if (localStorage.getItem('nexora_session_role') !== 'super_admin') {
-    window.location.href = 'index.html';
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+        localStorage.removeItem('nexora_session_role');
+        window.location.href = 'index.html';
+    });
 }
-
-document.getElementById('logoutBtn').addEventListener('click', function () {
-    localStorage.removeItem('nexora_session_role');
-    localStorage.removeItem('nexora_session_id');
-    window.location.href = 'index.html';
-});
 
 async function loadTableData() {
     const tableBody = document.getElementById('recentTasksTable');
-    const sheetData = await fetchDashboardStats();
+    if (!tableBody) return;
 
+    const sheetData = await fetchDashboardStats();
     if (!sheetData || sheetData.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Failed to load data or sheet is empty.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Failed to load data.</td></tr>`;
         return;
     }
 
     tableBody.innerHTML = '';
-
-    let activeTasksCount = 0;
-    let delayedTasksCount = 0;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    let activeTasksCount = 0, delayedTasksCount = 0, passCount = 0, failCount = 0;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
 
     sheetData.forEach((row) => {
-        const empName = row[0] || 'N/A';
-        const taskDesc = row[1] || 'N/A';
-        const status = row[2] || 'N/A';
-        const dateStr = row[3] || 'N/A';
+        const empName = row[0] || 'N/A', taskDesc = row[1] || 'N/A', status = row[2] || 'N/A', dateStr = row[3] || 'N/A', qaStatus = row[5] || '';
+        let statusStyle = '', actionBtn = '<span style="color: #bdc3c7; font-size: 13px;">No Action Needed</span>';
 
-        let statusStyle = '';
-        let actionBtn = '<span style="color: #bdc3c7; font-size: 13px;">No Action Needed</span>';
-        let isDelayed = false;
+        if (qaStatus === 'Pass') passCount++;
+        if (qaStatus === 'Fail') failCount++;
 
         if (status === 'Completed') {
             statusStyle = 'color: #16a34a; font-weight: 600; background: #dcfce7; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block;';
-            actionBtn = '<span style="color: #94a3b8; font-size: 12px; font-weight: 500;"><span style="color:#10b981; margin-right:4px;">✓</span> Done</span>';
+            if (qaStatus === 'Pass') actionBtn = '<span style="color: #16a34a; font-size: 12px; font-weight: 600;">QA Passed ✔</span>';
+            else if (qaStatus === 'Fail') actionBtn = '<span style="color: #dc2626; font-size: 12px; font-weight: 600;">QA Failed ✖</span>';
+            else actionBtn = '<span style="color: #ca8a04; font-size: 12px; font-weight: 500;">Pending QA Check</span>';
         } else if (status === 'Pending') {
             activeTasksCount++;
             statusStyle = 'color: #ea580c; font-weight: 600; background: #ffedd5; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block;';
-
             const taskDate = new Date(dateStr);
             if (taskDate < today) {
                 delayedTasksCount++;
-                isDelayed = true;
-
                 statusStyle = 'color: #dc2626; font-weight: 600; background: #fee2e2; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block;';
-
-                const message = encodeURIComponent(`⚠️ URGENT: Hello ${empName}, your assigned task "${taskDesc}" was due on ${dateStr} and is currently OVERDUE. Please update the status immediately.`);
-
-                actionBtn = `<a href="https://wa.me/?text=${message}" target="_blank" style="color: #059669; background: #ecfdf5; border: 1px solid #34d399; padding: 6px 14px; font-size: 12px; text-decoration: none; border-radius: 6px; font-weight: 600; transition: all 0.2s; display: inline-block;">📲 Send Reminder</a>`;
+                const message = encodeURIComponent(`⚠️ URGENT: Hello ${empName}, your task "${taskDesc}" is OVERDUE.`);
+                actionBtn = `<a href="https://wa.me/?text=${message}" target="_blank" style="color: #059669; background: #ecfdf5; border: 1px solid #34d399; padding: 6px 14px; font-size: 12px; text-decoration: none; border-radius: 6px; font-weight: 600;">📲 Reminder</a>`;
             }
         }
 
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${empName}</strong></td>
-            <td>${taskDesc}</td>
-            <td style="${statusStyle}">${status}</td>
-            <td>${dateStr}</td>
-            <td>${actionBtn}</td>
-        `;
+        tr.innerHTML = `<td><strong>${empName}</strong></td><td>${taskDesc}</td><td style="${statusStyle}">${status}</td><td>${dateStr}</td><td>${actionBtn}</td>`;
         tableBody.appendChild(tr);
     });
 
     document.getElementById('activeTasksCount').textContent = activeTasksCount;
-    const delayedElem = document.getElementById('delayedTasksCount');
-    delayedElem.textContent = delayedTasksCount;
+    document.getElementById('delayedTasksCount').textContent = delayedTasksCount;
+    if (document.getElementById('passCount')) document.getElementById('passCount').textContent = passCount;
+    if (document.getElementById('failCount')) document.getElementById('failCount').textContent = failCount;
 
     const badge = document.getElementById('alertBadge');
-    if (delayedTasksCount > 0 && badge) {
-        badge.style.display = 'block';
-        badge.textContent = delayedTasksCount;
-    } else if (badge) {
-        badge.style.display = 'none';
-    }
+    if (badge) badge.style.display = delayedTasksCount > 0 ? 'block' : 'none';
+    if (badge) badge.textContent = delayedTasksCount;
 
-    const alertBanner = document.getElementById('globalAlertBanner');
-    if (delayedTasksCount > 0) {
-        delayedElem.style.color = '#e74c3c';
-        delayedElem.style.fontWeight = 'bold';
-        if (alertBanner) alertBanner.style.display = 'block';
-    } else {
-        if (alertBanner) alertBanner.style.display = 'none';
-    }
-
-    if (window.workflowChartInstance) {
-        window.workflowChartInstance.destroy();
-    }
     const ctx = document.getElementById('workflowChart');
     if (ctx) {
+        if (window.workflowChartInstance) window.workflowChartInstance.destroy();
         window.workflowChartInstance = new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['Active Tasks', 'Completed Tasks', 'Delayed Tasks'],
+                labels: ['Active', 'Completed', 'Delayed'],
                 datasets: [{
-                    label: 'Task Volume',
-                    data: [activeTasksCount, sheetData.length - activeTasksCount, delayedTasksCount],
-                    backgroundColor: [
-                        'rgba(56, 189, 248, 0.4)', // Muted Blue
-                        'rgba(52, 211, 153, 0.4)', // Muted Green
-                        'rgba(248, 113, 113, 0.4)' // Muted Red
-                    ],
-                    borderColor: [
-                        '#0284c7', // Solid Blue
-                        '#059669', // Solid Green
-                        '#dc2626'  // Solid Red
-                    ],
-                    borderWidth: 1.5,
-                    borderRadius: 4,
-                    barThickness: 45
+                    label: 'Volume', data: [activeTasksCount, sheetData.length - activeTasksCount, delayedTasksCount],
+                    backgroundColor: ['rgba(56, 189, 248, 0.4)', 'rgba(52, 211, 153, 0.4)', 'rgba(248, 113, 113, 0.4)'],
+                    borderColor: ['#0284c7', '#059669', '#dc2626'], borderWidth: 1.5, borderRadius: 4, barThickness: 45
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1, color: '#94a3b8' },
-                        grid: { color: '#f1f5f9' }
-                    },
-                    x: {
-                        ticks: { color: '#64748b', font: { size: 12, weight: 500 } },
-                        grid: { display: false }
-                    }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
         });
     }
 }
 
-if (window.location.pathname.includes('dashboard.html')) {
-    loadTableData();
-}
+if (window.location.pathname.includes('dashboard.html')) loadTableData();
 
 if (window.location.pathname.includes('tasks.html')) {
 
-    const taskForm = document.getElementById('taskForm');
+    async function populateEmployeeDropdown() {
+        const empSelect = document.getElementById('empName');
+        if (!empSelect) return;
+        const employees = await fetchEmployees();
+        empSelect.innerHTML = '<option value="">-- Select Employee --</option>';
+        employees.forEach(emp => {
+            if (emp[1]) {
+                const option = document.createElement('option');
+                option.value = emp[1]; option.textContent = `${emp[1]} (${emp[2] || 'Staff'})`;
+                empSelect.appendChild(option);
+            }
+        });
+    }
+    populateEmployeeDropdown();
 
+    const taskForm = document.getElementById('taskForm');
     if (taskForm) {
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const btn = document.getElementById('submitTaskBtn');
-            const feedback = document.getElementById('formFeedback');
-
-            btn.textContent = "Assigning...";
-            btn.disabled = true;
-
-            const payload = {
-                employee: document.getElementById('empName').value.trim(),
-                task: document.getElementById('taskDesc').value.trim(),
-                status: 'Pending',
-                date: document.getElementById('dueDate').value
-            };
-
-            const result = await createNewTask(payload);
-
-            if (result.success) {
-                feedback.textContent = "✅ Task successfully assigned to Google Sheet!";
-                feedback.style.color = "#2ecc71";
-                taskForm.reset();
-            } else {
-                feedback.textContent = "❌ Failed to assign task.";
-                feedback.style.color = "#e74c3c";
-            }
-
-            feedback.style.display = "block";
-            btn.textContent = "Assign Task";
-            btn.disabled = false;
-
-            setTimeout(() => { feedback.style.display = "none"; }, 3000);
+            btn.textContent = "Assigning..."; btn.disabled = true;
+            const payload = { employee: document.getElementById('empName').value.trim(), task: document.getElementById('taskDesc').value.trim(), status: 'Pending', date: document.getElementById('dueDate').value };
+            await createNewTask(payload);
+            taskForm.reset();
+            btn.textContent = "Assign Task"; btn.disabled = false;
+            loadManagementTable();
         });
     }
 
     async function loadManagementTable() {
         const tbody = document.getElementById('managementTableBody');
         if (!tbody) return;
-
         const data = await fetchDashboardStats();
         tbody.innerHTML = '';
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No tasks found.</td></tr>`;
-            return;
-        }
+        if (!data || data.length === 0) return;
 
         data.forEach((row, index) => {
             const tr = document.createElement('tr');
-
             let actionHtml = '';
+            const qaStatus = row[5] || '';
+
             if (row[2] === 'Pending') {
-                actionHtml = `<button onclick="completeTask(${index})" class="btn-primary" style="padding: 5px 10px; font-size: 12px; background-color: #2ecc71;">✔ Mark Done</button>`;
+                actionHtml = `<button onclick="completeTask(${index})" style="padding: 5px 10px; font-size: 12px; background-color: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer;">✔ Mark Done</button>`;
+            } else if (row[2] === 'Completed' && qaStatus === '') {
+                actionHtml = `
+                    <button onclick="submitQA(${index}, 'Pass')" style="padding: 5px 10px; font-size: 12px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">Pass</button>
+                    <button onclick="submitQA(${index}, 'Fail')" style="padding: 5px 10px; font-size: 12px; background-color: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">Fail</button>
+                `;
             } else {
-                actionHtml = `<span style="color: #bdc3c7; font-size: 13px;">Completed</span>`;
+                const color = qaStatus === 'Pass' ? '#16a34a' : '#dc2626';
+                actionHtml = `<span style="color: ${color}; font-size: 13px; font-weight: bold;">QA: ${qaStatus}</span>`;
             }
 
-            tr.innerHTML = `
-                <td><strong>${row[0] || 'N/A'}</strong></td>
-                <td>${row[1] || 'N/A'}</td>
-                <td>${row[3] || 'N/A'}</td>
-                <td>${actionHtml}</td>
-            `;
+            tr.innerHTML = `<td><strong>${row[0] || 'N/A'}</strong></td><td>${row[1] || 'N/A'}</td><td>${row[3] || 'N/A'}</td><td>${actionHtml}</td>`;
             tbody.appendChild(tr);
         });
     }
-
     loadManagementTable();
 
     window.completeTask = async function (index) {
-        event.target.textContent = "Updating...";
-        event.target.disabled = true;
-
-        const result = await markTaskCompleted(index);
-        if (result.success) {
-            loadManagementTable();
-        } else {
-            alert("Failed to update task.");
-            event.target.textContent = "✔ Mark Done";
-            event.target.disabled = false;
-        }
+        event.target.textContent = "..."; event.target.disabled = true;
+        await markTaskCompleted(index);
+        loadManagementTable();
     };
 
-    async function populateEmployeeDropdown() {
-        const empSelect = document.getElementById('empName');
-        if (!empSelect) return;
+    window.submitQA = async function (index, status) {
+        event.target.textContent = "..."; event.target.disabled = true;
+        await updateQAStatus(index, status);
+        loadManagementTable();
+    };
+}
 
-        const employees = await fetchEmployees();
-        empSelect.innerHTML = '<option value="">-- Select Employee --</option>'; // Reset
-
-        employees.forEach(emp => {
-            if (emp[1]) {
-                const option = document.createElement('option');
-                option.value = emp[1];
-                option.textContent = `${emp[1]} (${emp[2] || 'Staff'})`;
-                empSelect.appendChild(option);
-            }
-        });
-    }
-
-    populateEmployeeDropdown();
-
-    window.exportTableToCSV = function (filename) {
-        const table = document.querySelector(".data-table");
-        let csv = [];
-
-        const rows = table.querySelectorAll("tr");
-
-        for (let i = 0; i < rows.length; i++) {
-            let row = [], cols = rows[i].querySelectorAll("td, th");
-
-            for (let j = 0; j < cols.length; j++) {
-                let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/,/g, "");
-                row.push(data);
-            }
-            csv.push(row.join(","));
+window.exportTableToCSV = function (filename) {
+    const table = document.querySelector(".data-table");
+    let csv = [];
+    const rows = table.querySelectorAll("tr");
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) {
+            row.push(cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/,/g, ""));
         }
-
-        const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
-        const downloadLink = document.createElement("a");
-        downloadLink.download = filename;
-        downloadLink.href = window.URL.createObjectURL(csvFile);
-        downloadLink.style.display = "none";
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+        csv.push(row.join(","));
     }
+    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+    const downloadLink = document.createElement("a");
+    downloadLink.download = filename; downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none"; document.body.appendChild(downloadLink);
+    downloadLink.click(); document.body.removeChild(downloadLink);
 }

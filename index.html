@@ -5,39 +5,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoraCore | Secure Access</title>
-    <link rel="stylesheet" href="css/global.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .auth-header h1 {
+            color: #072a4f;
+            font-size: 24px;
+            margin: 0 0 5px 0;
+        }
+
+        .auth-header p {
+            color: #888;
+            font-size: 11px;
+            margin: 0 0 30px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #072a4f;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #072a4f;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: #072a4f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #0a3d73;
+        }
+
+        #errorMsg {
+            margin-top: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #e74c3c;
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
-
-    <main class="auth-wrapper">
-        <section class="auth-card">
-            <div class="auth-header">
-                <h1>NexoraCore</h1>
-                <p>Enterprise Resource Planning</p>
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>NexoraCore</h1>
+            <p>Enterprise Resource Planning</p>
+        </div>
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="empId">Employee ID</label>
+                <input type="text" id="empId" required autocomplete="off" placeholder="Enter ID">
             </div>
+            <div class="input-group">
+                <label for="authKey">Access Key</label>
+                <input type="password" id="authKey" required placeholder="Enter Passkey">
+            </div>
+            <button type="submit" class="btn-primary">Authenticate</button>
+            <p id="errorMsg"></p>
+        </form>
+    </div>
 
-            <!-- The Secure Auth Form -->
-            <form id="loginForm">
-                <div class="input-group">
-                    <label for="empId">Employee ID</label>
-                    <input type="text" id="empId" required autocomplete="off" placeholder="Enter ID">
-                </div>
-
-                <div class="input-group">
-                    <label for="authKey">Access Key</label>
-                    <input type="password" id="authKey" required placeholder="Enter Passkey">
-                </div>
-
-                <button type="submit" class="btn-primary">Authenticate</button>
-
-                <!-- Placeholder for future error handling -->
-                <p id="errorMsg" style="display: none; color: red;"></p>
-            </form>
-        </section>
-    </main>
-
-    <!-- Decoupled Authentication Logic -->
     <script src="js/auth.js"></script>
 </body>
 
