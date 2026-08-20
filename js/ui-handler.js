@@ -169,3 +169,45 @@ window.exportTableToCSV = function (filename) {
     downloadLink.style.display = "none"; document.body.appendChild(downloadLink);
     downloadLink.click(); document.body.removeChild(downloadLink);
 }
+
+if (window.location.pathname.includes('inventory.html')) {
+    async function loadInventoryTable() {
+        const tbody = document.getElementById('inventoryTableBody');
+        if (!tbody) return;
+
+        const data = await fetchInventory();
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No inventory records found.</td></tr>`;
+            return;
+        }
+
+        data.forEach((row) => {
+            const itemId = row[0] || 'N/A';
+            const itemName = row[1] || 'N/A';
+            const category = row[2] || 'N/A';
+            const stock = parseInt(row[3]) || 0;
+            const reorderLevel = parseInt(row[4]) || 0;
+            let statusBadge = '';
+
+            if (stock <= reorderLevel) {
+                statusBadge = '<span style="color: #dc2626; font-weight: bold; background: #fee2e2; padding: 4px 8px; border-radius: 4px; font-size: 12px;">⚠️ Reorder Required</span>';
+            } else {
+                statusBadge = '<span style="color: #16a34a; font-weight: bold; background: #dcfce7; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Healthy</span>';
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${itemId}</strong></td>
+                <td>${itemName}</td>
+                <td>${category}</td>
+                <td style="font-weight: bold; font-size: 14px;">${stock}</td>
+                <td>${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    loadInventoryTable();
+}

@@ -90,5 +90,16 @@ app.put('/api/tasks/qa', async (req, res) => {
     }
 });
 
+app.get('/api/inventory', async (req, res) => {
+    try {
+        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A2:E' };
+        let data = await gsapi.spreadsheets.values.get(opt);
+        res.status(200).json({ success: true, data: data.data.values || [] });
+    } catch (error) {
+        console.error("❌ API Fetch Inventory Error:", error.message);
+        res.status(500).json({ success: false });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));

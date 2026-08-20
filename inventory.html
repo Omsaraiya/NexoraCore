@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | Inventory Manager</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>NexoraCore</h2>
+            </div>
+            <nav class="side-nav">
+                <a href="dashboard.html">Overview</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="inventory.html" class="active">Inventory Manager</a>
+                <a href="production.html">Production Logs</a>
+            </nav>
+            <div class="logout-section">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <header class="topbar">
+                <h2>Warehouse & Inventory</h2>
+                <div class="user-info">Welcome, MD001</div>
+            </header>
+
+            <main class="content-area">
+                <div class="panel-card">
+                    <div class="panel-header"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+                        <div>
+                            <h3 style="margin: 0; color: #0f172a; font-size: 18px;">Live Stock Ledger</h3>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Real-time tracking of raw
+                                materials and finished goods.</p>
+                        </div>
+                        <button class="btn-primary" style="padding: 8px 16px; font-size: 13px;">+ Add New Item</button>
+                    </div>
+
+                    <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr
+                                style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase;">
+                                <th style="padding: 12px 8px;">Item ID</th>
+                                <th style="padding: 12px 8px;">Item Name</th>
+                                <th style="padding: 12px 8px;">Category</th>
+                                <th style="padding: 12px 8px;">Current Stock</th>
+                                <th style="padding: 12px 8px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">Syncing
+                                    warehouse data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui-handler.js"></script>
+</body>
+
+</html>

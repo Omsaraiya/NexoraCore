@@ -42,3 +42,14 @@ async function updateQAStatus(rowIndex, status) {
         return await response.json();
     } catch (error) { return { success: false }; }
 }
+
+async function fetchInventory() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/inventory`);
+        const result = await response.json();
+        return result.success ? result.data : [];
+    } catch (error) {
+        console.error("Inventory Fetch Error:", error);
+        return [];
+    }
+}
