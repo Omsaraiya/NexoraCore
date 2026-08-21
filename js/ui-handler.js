@@ -1,3 +1,4 @@
+// GLOBAL LOGIC
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
@@ -6,78 +7,126 @@ if (logoutBtn) {
     });
 }
 
-async function loadTableData() {
-    const tableBody = document.getElementById('recentTasksTable');
-    if (!tableBody) return;
-
-    const sheetData = await fetchDashboardStats();
-    if (!sheetData || sheetData.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Failed to load data.</td></tr>`;
-        return;
-    }
-
-    tableBody.innerHTML = '';
-    let activeTasksCount = 0, delayedTasksCount = 0, passCount = 0, failCount = 0;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-
-    sheetData.forEach((row) => {
-        const empName = row[0] || 'N/A', taskDesc = row[1] || 'N/A', status = row[2] || 'N/A', dateStr = row[3] || 'N/A', qaStatus = row[5] || '';
-        let statusStyle = '', actionBtn = '<span style="color: #bdc3c7; font-size: 13px;">No Action Needed</span>';
-
-        if (qaStatus === 'Pass') passCount++;
-        if (qaStatus === 'Fail') failCount++;
-
-        if (status === 'Completed') {
-            statusStyle = 'color: #16a34a; font-weight: 600; background: #dcfce7; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block;';
-            if (qaStatus === 'Pass') actionBtn = '<span style="color: #16a34a; font-size: 12px; font-weight: 600;">QA Passed ✔</span>';
-            else if (qaStatus === 'Fail') actionBtn = '<span style="color: #dc2626; font-size: 12px; font-weight: 600;">QA Failed ✖</span>';
-            else actionBtn = '<span style="color: #ca8a04; font-size: 12px; font-weight: 500;">Pending QA Check</span>';
-        } else if (status === 'Pending') {
-            activeTasksCount++;
-            statusStyle = 'color: #ea580c; font-weight: 600; background: #ffedd5; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block;';
-            const taskDate = new Date(dateStr);
-            if (taskDate < today) {
-                delayedTasksCount++;
-                statusStyle = 'color: #dc2626; font-weight: 600; background: #fee2e2; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: inline-block;';
-                const message = encodeURIComponent(`⚠️ URGENT: Hello ${empName}, your task "${taskDesc}" is OVERDUE.`);
-                actionBtn = `<a href="https://wa.me/?text=${message}" target="_blank" style="color: #059669; background: #ecfdf5; border: 1px solid #34d399; padding: 6px 14px; font-size: 12px; text-decoration: none; border-radius: 6px; font-weight: 600;">📲 Reminder</a>`;
-            }
+window.exportTableToCSV = function (filename) {
+    const table = document.querySelector(".data-table");
+    let csv = [];
+    const rows = table.querySelectorAll("tr");
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) {
+            row.push(cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/,/g, ""));
         }
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td><strong>${empName}</strong></td><td>${taskDesc}</td><td style="${statusStyle}">${status}</td><td>${dateStr}</td><td>${actionBtn}</td>`;
-        tableBody.appendChild(tr);
-    });
-
-    document.getElementById('activeTasksCount').textContent = activeTasksCount;
-    document.getElementById('delayedTasksCount').textContent = delayedTasksCount;
-    if (document.getElementById('passCount')) document.getElementById('passCount').textContent = passCount;
-    if (document.getElementById('failCount')) document.getElementById('failCount').textContent = failCount;
-
-    const badge = document.getElementById('alertBadge');
-    if (badge) badge.style.display = delayedTasksCount > 0 ? 'block' : 'none';
-    if (badge) badge.textContent = delayedTasksCount;
-
-    const ctx = document.getElementById('workflowChart');
-    if (ctx) {
-        if (window.workflowChartInstance) window.workflowChartInstance.destroy();
-        window.workflowChartInstance = new Chart(ctx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Active', 'Completed', 'Delayed'],
-                datasets: [{
-                    label: 'Volume', data: [activeTasksCount, sheetData.length - activeTasksCount, delayedTasksCount],
-                    backgroundColor: ['rgba(56, 189, 248, 0.4)', 'rgba(52, 211, 153, 0.4)', 'rgba(248, 113, 113, 0.4)'],
-                    borderColor: ['#0284c7', '#059669', '#dc2626'], borderWidth: 1.5, borderRadius: 4, barThickness: 45
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
-        });
+        csv.push(row.join(","));
     }
+    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+    const downloadLink = document.createElement("a");
+    downloadLink.download = filename; downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none"; document.body.appendChild(downloadLink);
+    downloadLink.click(); document.body.removeChild(downloadLink);
 }
 
-if (window.location.pathname.includes('dashboard.html')) loadTableData();
+// EXECUTIVE "GOD VIEW" DASHBOARD LOGIC
+if (window.location.pathname.includes('dashboard.html')) {
 
+    async function loadGodView() {
+        const tableBody = document.getElementById('recentTasksTable');
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#64748b;">Aggregating multi-source data...</td></tr>`;
+
+        // 1. ASYNC MULTI-FETCH (Speed Optimization)
+        const [tasks, inventory, finance] = await Promise.all([
+            fetchDashboardStats(),
+            fetchInventory(),
+            fetchFinanceData()
+        ]);
+
+        // 2. PROCESS TASK DATA
+        let activeTasksCount = 0, delayedTasksCount = 0;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+
+        if (tableBody) tableBody.innerHTML = '';
+
+        (tasks || []).forEach((row) => {
+            const empName = row[0] || 'N/A', taskDesc = row[1] || 'N/A', status = row[2] || 'N/A', dateStr = row[3] || 'N/A', qaStatus = row[5] || '';
+            let statusStyle = '', actionBtn = '<span style="color: #bdc3c7; font-size: 13px;">No Action Needed</span>';
+
+            if (status === 'Completed') {
+                statusStyle = 'color: #16a34a; font-weight: bold; background: #dcfce7; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-block;';
+                if (qaStatus === 'Pass') actionBtn = '<span style="color: #16a34a; font-size: 12px; font-weight: bold;">QA Passed ✔</span>';
+                else if (qaStatus === 'Fail') actionBtn = '<span style="color: #dc2626; font-size: 12px; font-weight: bold;">QA Failed ✖</span>';
+                else actionBtn = '<span style="color: #ca8a04; font-size: 12px; font-weight: bold;">Pending QA</span>';
+            } else if (status === 'Pending') {
+                activeTasksCount++;
+                statusStyle = 'color: #ea580c; font-weight: bold; background: #ffedd5; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-block;';
+
+                const taskDate = new Date(dateStr);
+                if (taskDate < today) {
+                    delayedTasksCount++;
+                    statusStyle = 'color: #dc2626; font-weight: bold; background: #fee2e2; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-block;';
+                    actionBtn = `<span style="color: #dc2626; font-size: 12px; font-weight: bold;">⚠️ OVERDUE</span>`;
+                }
+            }
+
+            if (tableBody) {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = "1px solid #f1f5f9";
+                tr.innerHTML = `<td style="padding: 12px 15px; font-weight: 500; color:#0f172a;">${empName}</td><td style="padding: 12px 15px; color:#475569;">${taskDesc}</td><td style="padding: 12px 15px;">${statusStyle.length ? `<span style="${statusStyle}">${status}</span>` : status}</td><td style="padding: 12px 15px;">${actionBtn}</td>`;
+                tableBody.appendChild(tr);
+            }
+        });
+
+        // 3. PROCESS INVENTORY ALERTS
+        let lowStockCount = 0;
+        (inventory || []).forEach(row => {
+            const stock = parseInt(row[3]) || 0;
+            const reorder = parseInt(row[4]) || 0;
+            if (stock <= reorder) lowStockCount++;
+        });
+
+        // 4. PROCESS FINANCE & PING PYTHON
+        let totalInc = 0, totalExp = 0;
+        (finance || []).forEach(row => {
+            const type = row[2];
+            const amt = parseFloat(row[4]) || 0;
+            if (type === 'Income') totalInc += amt;
+            if (type === 'Expense') totalExp += amt;
+        });
+
+        const pyResult = await calculateTaxWithPython(totalInc, totalExp);
+        if (pyResult && pyResult.success && document.getElementById('godNetProfit')) {
+            document.getElementById('godNetProfit').textContent = `₹${pyResult.net_profit.toLocaleString('en-IN')}`;
+        }
+
+        // 5. UPDATE DOM CARDS
+        if (document.getElementById('godActiveTasks')) document.getElementById('godActiveTasks').textContent = activeTasksCount;
+        if (document.getElementById('godDelayedTasks')) document.getElementById('godDelayedTasks').textContent = delayedTasksCount;
+        if (document.getElementById('godInventoryAlerts')) document.getElementById('godInventoryAlerts').textContent = lowStockCount;
+
+        // 6. RENDER WORKFLOW CHART
+        const ctx = document.getElementById('workflowChart');
+        if (ctx) {
+            if (window.workflowChartInstance) window.workflowChartInstance.destroy();
+            const completedCount = Math.max(0, tasks.length - activeTasksCount - delayedTasksCount);
+
+            window.workflowChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Active', 'Completed', 'Delayed'],
+                    datasets: [{
+                        data: [activeTasksCount, completedCount, delayedTasksCount],
+                        backgroundColor: ['rgba(59, 130, 246, 0.2)', 'rgba(22, 163, 74, 0.2)', 'rgba(220, 38, 38, 0.2)'],
+                        borderColor: ['#3b82f6', '#16a34a', '#dc2626'],
+                        borderWidth: 2, borderRadius: 4, barThickness: 30
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+            });
+        }
+    }
+
+    loadGodView();
+}
+
+// TASK MANAGER LOGIC
 if (window.location.pathname.includes('tasks.html')) {
 
     async function populateEmployeeDropdown() {
@@ -152,24 +201,7 @@ if (window.location.pathname.includes('tasks.html')) {
     };
 }
 
-window.exportTableToCSV = function (filename) {
-    const table = document.querySelector(".data-table");
-    let csv = [];
-    const rows = table.querySelectorAll("tr");
-    for (let i = 0; i < rows.length; i++) {
-        let row = [], cols = rows[i].querySelectorAll("td, th");
-        for (let j = 0; j < cols.length; j++) {
-            row.push(cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/,/g, ""));
-        }
-        csv.push(row.join(","));
-    }
-    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
-    const downloadLink = document.createElement("a");
-    downloadLink.download = filename; downloadLink.href = window.URL.createObjectURL(csvFile);
-    downloadLink.style.display = "none"; document.body.appendChild(downloadLink);
-    downloadLink.click(); document.body.removeChild(downloadLink);
-}
-
+// INVENTORY LOGIC
 if (window.location.pathname.includes('inventory.html')) {
     async function loadInventoryTable() {
         const tbody = document.getElementById('inventoryTableBody');
@@ -212,6 +244,7 @@ if (window.location.pathname.includes('inventory.html')) {
     loadInventoryTable();
 }
 
+// FINANCE LOGIC
 if (window.location.pathname.includes('finance.html')) {
 
     async function loadFinanceLedger() {
