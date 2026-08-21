@@ -53,3 +53,27 @@ async function fetchInventory() {
         return [];
     }
 }
+
+async function fetchFinanceData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/finance`);
+        const result = await response.json();
+        return result.success ? result.data : [];
+    } catch (error) {
+        console.error("Finance Fetch Error:", error);
+        return [];
+    }
+}
+
+async function addTransaction(txnData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/finance`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(txnData)
+        });
+        return await response.json();
+    } catch (error) {
+        return { success: false };
+    }
+}

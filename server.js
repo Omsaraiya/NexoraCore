@@ -101,5 +101,32 @@ app.get('/api/inventory', async (req, res) => {
     }
 });
 
+app.get('/api/finance', async (req, res) => {
+    try {
+        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Finance!A2:F' };
+        let data = await gsapi.spreadsheets.values.get(opt);
+        res.status(200).json({ success: true, data: data.data.values || [] });
+    } catch (error) {
+        console.error("❌ API Fetch Finance Error:", error.message);
+        res.status(500).json({ success: false });
+    }
+});
+
+app.post('/api/finance', async (req, res) => {
+    try {
+        const { txnId, date, type, category, amount, description } = req.body;
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Finance!A:F',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[txnId, date, type, category, amount, description]] }
+        });
+        res.status(201).json({ success: true });
+    } catch (error) {
+        console.error("❌ API Add Transaction Error:", error.message);
+        res.status(500).json({ success: false });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));

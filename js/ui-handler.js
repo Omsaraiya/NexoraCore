@@ -211,3 +211,95 @@ if (window.location.pathname.includes('inventory.html')) {
 
     loadInventoryTable();
 }
+
+if (window.location.pathname.includes('finance.html')) {
+
+    async function loadFinanceLedger() {
+        const tbody = document.getElementById('financeTableBody');
+        if (!tbody) return;
+
+        const data = await fetchFinanceData();
+        tbody.innerHTML = '';
+
+        let totalInc = 0;
+        let totalExp = 0;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No financial records found.</td></tr>`;
+        } else {
+            data.slice().reverse().forEach((row) => {
+                const txnId = row[0] || '-';
+                const dateStr = row[1] || '-';
+                const type = row[2] || '-';
+                const category = row[3] || '-';
+                const amount = parseFloat(row[4]) || 0;
+
+                let typeBadge = '';
+                let amountStyle = '';
+
+                if (type === 'Income') {
+                    totalInc += amount;
+                    typeBadge = '<span style="color: #16a34a; background: #dcfce7; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">INCOME</span>';
+                    amountStyle = 'color: #16a34a; font-weight: bold;';
+                } else if (type === 'Expense') {
+                    totalExp += amount;
+                    typeBadge = '<span style="color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">EXPENSE</span>';
+                    amountStyle = 'color: #dc2626; font-weight: bold;';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding: 12px 8px; color: #64748b;">${dateStr}</td>
+                    <td style="padding: 12px 8px; font-weight: bold; color: #072a4f;">${txnId}</td>
+                    <td style="padding: 12px 8px;">${typeBadge}</td>
+                    <td style="padding: 12px 8px;">${category}</td>
+                    <td style="${amountStyle} padding: 12px 8px;">₹${amount.toLocaleString('en-IN')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('totalIncome').textContent = `₹${totalInc.toLocaleString('en-IN')}`;
+        document.getElementById('totalExpense').textContent = `₹${totalExp.toLocaleString('en-IN')}`;
+
+        const net = totalInc - totalExp;
+        const netElem = document.getElementById('netBalance');
+        netElem.textContent = `₹${net.toLocaleString('en-IN')}`;
+        netElem.style.color = net >= 0 ? '#16a34a' : '#dc2626';
+    }
+
+    loadFinanceLedger();
+
+    const financeForm = document.getElementById('financeForm');
+    if (financeForm) {
+        financeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('financeSubmitBtn');
+            btn.textContent = "Recording...";
+            btn.disabled = true;
+
+            const txnId = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+            const dateStr = new Date().toISOString().split('T')[0];
+
+            const payload = {
+                txnId: txnId,
+                date: dateStr,
+                type: document.getElementById('txnType').value,
+                category: document.getElementById('txnCategory').value.trim(),
+                amount: document.getElementById('txnAmount').value,
+                description: document.getElementById('txnDesc').value.trim()
+            };
+
+            const result = await addTransaction(payload);
+            if (result.success) {
+                financeForm.reset();
+                loadFinanceLedger();
+            } else {
+                alert("Failed to record transaction.");
+            }
+
+            btn.textContent = "Record";
+            btn.disabled = false;
+        });
+    }
+}

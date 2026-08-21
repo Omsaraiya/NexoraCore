@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | Financial Core</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>NexoraCore</h2>
+            </div>
+            <nav class="side-nav">
+                <a href="dashboard.html">Overview</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="inventory.html">Inventory Manager</a>
+                <a href="finance.html" class="active">Financial Core</a>
+                <a href="production.html">Production Logs</a>
+            </nav>
+            <div class="logout-section">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <header class="topbar">
+                <h2>Financial Command Center</h2>
+                <div class="user-info">Welcome, MD001</div>
+            </header>
+
+            <main class="content-area">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+                    <div class="panel-card" style="padding: 20px; border-left: 4px solid #16a34a;">
+                        <h4 style="margin: 0; color: #64748b; font-size: 13px; text-transform: uppercase;">Total Income
+                        </h4>
+                        <h2 id="totalIncome" style="margin: 10px 0 0 0; color: #0f172a; font-size: 28px;">₹0</h2>
+                    </div>
+                    <div class="panel-card" style="padding: 20px; border-left: 4px solid #dc2626;">
+                        <h4 style="margin: 0; color: #64748b; font-size: 13px; text-transform: uppercase;">Total
+                            Expenses</h4>
+                        <h2 id="totalExpense" style="margin: 10px 0 0 0; color: #0f172a; font-size: 28px;">₹0</h2>
+                    </div>
+                    <div class="panel-card" style="padding: 20px; border-left: 4px solid #072a4f;">
+                        <h4 style="margin: 0; color: #64748b; font-size: 13px; text-transform: uppercase;">Net Balance
+                        </h4>
+                        <h2 id="netBalance" style="margin: 10px 0 0 0; color: #072a4f; font-size: 28px;">₹0</h2>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="margin-bottom: 20px; padding: 20px;">
+                    <h3 style="margin-top: 0; color: #0f172a; font-size: 16px; margin-bottom: 15px;">+ Log Transaction
+                    </h3>
+                    <form id="financeForm"
+                        style="display: grid; grid-template-columns: 1fr 1fr 1fr 2fr auto; gap: 15px; align-items: end;">
+                        <div>
+                            <label for="txnType"
+                                style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px;">Type</label>
+                            <select id="txnType" required
+                                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                                <option value="Income">Income</option>
+                                <option value="Expense">Expense</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="txnCategory"
+                                style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px;">Category</label>
+                            <input type="text" id="txnCategory" placeholder="e.g. Sales, Salary..." required
+                                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label for="txnAmount"
+                                style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px;">Amount
+                                (₹)</label>
+                            <input type="number" id="txnAmount" placeholder="0.00" required
+                                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label for="txnDesc"
+                                style="display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px;">Description</label>
+                            <input type="text" id="txnDesc" placeholder="Optional details..."
+                                style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        </div>
+                        <button type="submit" id="financeSubmitBtn" class="btn-primary"
+                            style="padding: 10px 20px; height: 38px;">Record</button>
+                    </form>
+                </div>
+
+                <div class="panel-card">
+                    <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                        <thead>
+                            <tr
+                                style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase;">
+                                <th style="padding: 12px 8px;">Date</th>
+                                <th style="padding: 12px 8px;">TXN ID</th>
+                                <th style="padding: 12px 8px;">Type</th>
+                                <th style="padding: 12px 8px;">Category</th>
+                                <th style="padding: 12px 8px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financeTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">Loading
+                                    financial records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui-handler.js"></script>
+</body>
+
+</html>
