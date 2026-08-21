@@ -259,6 +259,7 @@ if (window.location.pathname.includes('finance.html')) {
             });
         }
 
+        // Update Dashboard Cards
         document.getElementById('totalIncome').textContent = `₹${totalInc.toLocaleString('en-IN')}`;
         document.getElementById('totalExpense').textContent = `₹${totalExp.toLocaleString('en-IN')}`;
 
@@ -266,6 +267,14 @@ if (window.location.pathname.includes('finance.html')) {
         const netElem = document.getElementById('netBalance');
         netElem.textContent = `₹${net.toLocaleString('en-IN')}`;
         netElem.style.color = net >= 0 ? '#16a34a' : '#dc2626';
+
+        // --- PING PYTHON ENGINE FOR ADVANCED ANALYTICS ---
+        const pyResult = await calculateTaxWithPython(totalInc, totalExp);
+        if (pyResult && pyResult.success) {
+            document.getElementById('pyGrossProfit').textContent = `₹${pyResult.gross_profit.toLocaleString('en-IN')}`;
+            document.getElementById('pyTax').textContent = `₹${pyResult.estimated_tax.toLocaleString('en-IN')}`;
+            document.getElementById('pyNetProfit').textContent = `₹${pyResult.net_profit.toLocaleString('en-IN')}`;
+        }
     }
 
     loadFinanceLedger();

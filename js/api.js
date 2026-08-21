@@ -77,3 +77,18 @@ async function addTransaction(txnData) {
         return { success: false };
     }
 }
+
+// --- PYTHON MICROSERVICE CONNECTOR ---
+async function calculateTaxWithPython(income, expense) {
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/calculate-tax', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ income: income, expense: expense })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Python Engine Error:", error);
+        return { success: false };
+    }
+}
