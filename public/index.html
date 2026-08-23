@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | Secure Access</title>
+    <!-- Lightweight eye icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- LINKING OUR EXTERNAL ENTERPRISE CSS -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+
+<body>
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>NexoraCore</h1>
+            <p>Enterprise Resource Planning</p>
+        </div>
+
+        <form id="loginForm">
+            <!-- Centralized Single-Factory Credentials -->
+            <div class="input-group">
+                <label for="empId">Employee ID</label>
+                <input type="text" id="empId" required autocomplete="username" placeholder="e.g. MD001">
+            </div>
+
+            <div class="input-group">
+                <label for="authKey">Access Key</label>
+                <input type="password" id="authKey" required autocomplete="current-password"
+                    placeholder="Enter Passkey">
+                <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
+            </div>
+
+            <div class="secondary-actions">
+                <label>
+                    <input type="checkbox" id="rememberMe"> Remember Device
+                </label>
+                <a href="#">Forgot Key?</a>
+            </div>
+
+            <button type="submit" id="authBtn" class="btn-primary">Authenticate</button>
+            <div id="errorMsg"></div>
+        </form>
+
+        <!-- New Employee Workflow -->
+        <div class="footer-action">
+            New Employee? <br>
+            <a href="#"
+                onclick="alert('Please contact the HR/IT Administrator to receive your unique Employee ID and temporary Access Key.'); return false;">How
+                to activate your account</a>
+        </div>
+    </div>
+
+    <!-- LINKING OUR MODULAR JAVASCRIPT -->
+    <script src="js/auth.js"></script>
+    <script>
+        // Password Show/Hide Toggle
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const pwdInput = document.getElementById('authKey');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                pwdInput.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    </script>
+</body>
+
+</html>
