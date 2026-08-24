@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | HR Management</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>NexoraCore</h2>
+            </div>
+            <nav class="side-nav">
+                <a href="dashboard.html">Overview</a>
+                <a href="hr.html" class="active">HR & Access</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="inventory.html">Inventory Manager</a>
+                <a href="finance.html">Financial Core</a>
+                <a href="production.html">Production Logs</a>
+            </nav>
+            <div class="logout-section">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <!-- MAIN WRAPPER -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <h2>Human Resources & Provisioning</h2>
+                <div class="user-info">Welcome, MD001</div>
+            </header>
+
+            <main class="content-area">
+                <div class="grid-2-col">
+                    <!-- PROVISIONING FORM -->
+                    <div class="panel-card p-20">
+                        <h3 class="mt-0">+ Provision New Employee</h3>
+                        <p class="text-muted">System will auto-generate ID and Passkey.</p>
+
+                        <form id="hrForm">
+                            <div class="input-group">
+                                <label for="empName">Full Name</label>
+                                <input type="text" id="empName" placeholder="e.g. Rahul Sharma" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="empRole">System Role</label>
+                                <select id="empRole" required>
+                                    <option value="Staff">Floor Staff (Restricted)</option>
+                                    <option value="Manager">Floor Manager</option>
+                                    <option value="MD">Managing Director (God View)</option>
+                                </select>
+                            </div>
+                            <button type="submit" id="hrSubmitBtn" class="btn-primary">Generate Credentials</button>
+                        </form>
+
+                        <!-- Secure display for newly generated credentials -->
+                        <div id="newCredentialsDisplay"
+                            style="display:none; margin-top: 20px; padding: 15px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
+                            <p><strong>Success! Hand these to the employee:</strong></p>
+                            <p>ID: <span id="displayId" style="color: #072a4f; font-weight: bold;"></span></p>
+                            <p>Key: <span id="displayKey" style="color: #dc2626; font-weight: bold;"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- EMPLOYEE DIRECTORY -->
+                    <div class="panel-card">
+                        <h3>Active Enterprise Directory</h3>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Emp ID</th>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hrTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center">Syncing directory...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="js/api.js"></script>
+    <script src="js/ui-handler.js"></script>
+</body>
+
+</html>

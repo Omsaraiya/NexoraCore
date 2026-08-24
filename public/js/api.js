@@ -92,3 +92,14 @@ async function calculateTaxWithPython(income, expense) {
         return { success: false };
     }
 }
+
+async function registerEmployee(empData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/employees`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(empData)
+        });
+        return await response.json();
+    } catch (error) { return { success: false }; }
+}

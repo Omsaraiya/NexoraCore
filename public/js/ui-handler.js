@@ -1,4 +1,6 @@
+// ==========================================
 // GLOBAL LOGIC
+// ==========================================
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
@@ -25,7 +27,88 @@ window.exportTableToCSV = function (filename) {
     downloadLink.click(); document.body.removeChild(downloadLink);
 }
 
+// ==========================================
+// HR & PROVISIONING LOGIC
+// ==========================================
+if (window.location.pathname.includes('hr.html')) {
+
+    async function loadDirectory() {
+        const tbody = document.getElementById('hrTableBody');
+        if (!tbody) return;
+
+        const data = await fetchEmployees();
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No staff found.</td></tr>`;
+            return;
+        }
+
+        data.forEach((row) => {
+            const empId = row[0] || 'N/A';
+            const name = row[1] || 'N/A';
+            const role = row[2] || 'N/A';
+            const status = row[4] || 'Active'; // Assuming E is status
+
+            const statusBadge = status === 'Active' ? '<span class="badge-success">Active</span>' : '<span class="badge-warning">Suspended</span>';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight:bold; color:#072a4f;">${empId}</td>
+                <td>${name}</td>
+                <td>${role}</td>
+                <td>${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    loadDirectory();
+
+    const hrForm = document.getElementById('hrForm');
+    if (hrForm) {
+        hrForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('hrSubmitBtn');
+            btn.textContent = "Provisioning...";
+            btn.disabled = true;
+
+            // Auto-Generate Credentials
+            const empName = document.getElementById('empName').value.trim();
+            const role = document.getElementById('empRole').value;
+            const generatedId = 'EMP-' + Math.floor(1000 + Math.random() * 9000);
+            const generatedKey = Math.random().toString(36).slice(-6).toUpperCase();
+
+            const payload = {
+                empId: generatedId,
+                name: empName,
+                role: role,
+                passkey: generatedKey,
+                status: 'Active'
+            };
+
+            const result = await registerEmployee(payload);
+            if (result.success) {
+                hrForm.reset();
+                loadDirectory();
+
+                // Show credentials to the MD
+                document.getElementById('newCredentialsDisplay').style.display = 'block';
+                document.getElementById('displayId').textContent = generatedId;
+                document.getElementById('displayKey').textContent = generatedKey;
+            } else {
+                alert("Failed to provision employee.");
+            }
+
+            btn.textContent = "Generate Credentials";
+            btn.disabled = false;
+        });
+    }
+}
+
+// ==========================================
 // EXECUTIVE "GOD VIEW" DASHBOARD LOGIC
+// ==========================================
 if (window.location.pathname.includes('dashboard.html')) {
 
     async function loadGodView() {
@@ -126,7 +209,9 @@ if (window.location.pathname.includes('dashboard.html')) {
     loadGodView();
 }
 
+// ==========================================
 // TASK MANAGER LOGIC
+// ==========================================
 if (window.location.pathname.includes('tasks.html')) {
 
     async function populateEmployeeDropdown() {
@@ -201,7 +286,9 @@ if (window.location.pathname.includes('tasks.html')) {
     };
 }
 
+// ==========================================
 // INVENTORY LOGIC
+// ==========================================
 if (window.location.pathname.includes('inventory.html')) {
     async function loadInventoryTable() {
         const tbody = document.getElementById('inventoryTableBody');
@@ -244,7 +331,9 @@ if (window.location.pathname.includes('inventory.html')) {
     loadInventoryTable();
 }
 
+// ==========================================
 // FINANCE LOGIC
+// ==========================================
 if (window.location.pathname.includes('finance.html')) {
 
     async function loadFinanceLedger() {

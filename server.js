@@ -130,5 +130,22 @@ app.post('/api/finance', async (req, res) => {
     }
 });
 
+// 9. Add New Employee (HR Provisioning)
+app.post('/api/employees', async (req, res) => {
+    try {
+        const { empId, name, role, passkey, status } = req.body;
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Employees!A:E',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[empId, name, role, passkey, status]] }
+        });
+        res.status(201).json({ success: true });
+    } catch (error) {
+        console.error("❌ API HR Provisioning Error:", error.message);
+        res.status(500).json({ success: false });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));
