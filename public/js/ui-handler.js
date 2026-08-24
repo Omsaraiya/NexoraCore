@@ -9,6 +9,16 @@ if (logoutBtn) {
     });
 }
 
+// Dynamic User Greeting
+const userInfoDisplay = document.querySelector('.user-info');
+if (userInfoDisplay) {
+    let currentName = localStorage.getItem('nexora_session_name');
+    if (!currentName || currentName === 'undefined') {
+        currentName = 'Authorized User';
+    }
+    userInfoDisplay.textContent = `Welcome, ${currentName}`;
+}
+
 window.exportTableToCSV = function (filename) {
     const table = document.querySelector(".data-table");
     let csv = [];

@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
 
     if (loginForm) {
-        loginForm.addEventListener('submit', function (e) {
+        loginForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const empId = document.getElementById('empId').value.trim();
@@ -10,31 +10,46 @@ document.addEventListener('DOMContentLoaded', function () {
             const btn = document.getElementById('authBtn');
             const errorMsg = document.getElementById('errorMsg');
 
-            // UI UX Feedback: Visual loading state
-            btn.textContent = "Verifying MFA...";
+            // UI UX Feedback
+            btn.textContent = "Verifying Credentials...";
             btn.disabled = true;
             errorMsg.style.display = "none";
 
-            // Simulate lightweight local network check (zero API cost)
-            setTimeout(() => {
-                // MD / Admin Access Route (God View)
-                if (empId === 'MD001' && authKey === 'admin123') {
-                    localStorage.setItem('nexora_session_role', 'MD');
-                    window.location.href = 'dashboard.html';
-                }
-                // Floor Staff Access Route (Restricted to Task View)
-                else if (empId === 'STAFF' && authKey === 'staff123') {
-                    localStorage.setItem('nexora_session_role', 'Staff');
-                    window.location.href = 'tasks.html';
-                }
-                // Authentication Failed Route
-                else {
-                    errorMsg.textContent = "Authentication Failed. Invalid ID or Passkey.";
+            try {
+                // Call our real Node.js Backend
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ empId: empId, passkey: authKey })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // FIX: We must store BOTH the role AND the name!
+                    localStorage.setItem('nexora_session_role', result.role);
+                    localStorage.setItem('nexora_session_name', result.name);
+
+                    // Route based on real database designation
+                    if (result.role === 'MD' || result.role === 'Manager') {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        window.location.href = 'tasks.html';
+                    }
+                } else {
+                    // Show exact error message from server
+                    errorMsg.textContent = result.message;
                     errorMsg.style.display = "block";
                     btn.textContent = "Authenticate";
                     btn.disabled = false;
                 }
-            }, 600); // 600ms delay for premium feel
+            } catch (error) {
+                console.error("Auth Error:", error);
+                errorMsg.textContent = "Unable to connect to authentication server.";
+                errorMsg.style.display = "block";
+                btn.textContent = "Authenticate";
+                btn.disabled = false;
+            }
         });
     }
 });

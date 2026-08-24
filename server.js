@@ -147,5 +147,43 @@ app.post('/api/employees', async (req, res) => {
     }
 });
 
+// 10. Dynamic Login Authentication
+app.post('/api/login', async (req, res) => {
+    try {
+        const { empId, passkey } = req.body;
+
+        const response = await gsapi.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Employees!A:E'
+        });
+
+        const rows = response.data.values;
+        if (!rows || rows.length === 0) {
+            return res.status(401).json({ success: false, message: "No active users found." });
+        }
+
+        for (let i = 1; i < rows.length; i++) {
+            const dbId = rows[i][0];
+            const dbRole = rows[i][2];
+            const dbKey = rows[i][3];
+            const dbStatus = rows[i][4];
+
+            if (dbId === empId && dbKey === passkey) {
+                if (dbStatus !== 'Active') {
+                    return res.status(403).json({ success: false, message: "Account is suspended." });
+                }
+
+                return res.json({ success: true, role: dbRole, name: rows[i][1] });
+            }
+        }
+
+        return res.status(401).json({ success: false, message: "Invalid ID or Passkey." });
+
+    } catch (error) {
+        console.error("❌ Login API Error:", error.message);
+        res.status(500).json({ success: false, message: "Server error during authentication." });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));
