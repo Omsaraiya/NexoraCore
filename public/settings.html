@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | System Settings</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/mobile.css">
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>NexoraCore</h2>
+            </div>
+            <nav class="side-nav">
+                <a href="dashboard.html">Overview</a>
+                <a href="hr.html">HR & Access</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="inventory.html">Inventory Manager</a>
+                <a href="supply.html">Supply Chain</a>
+                <a href="finance.html">Financial Core</a>
+                <a href="production.html">Production Logs</a>
+                <a href="settings.html" class="active">System Settings</a>
+            </nav>
+            <div class="logout-section">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <!-- MAIN WRAPPER -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div style="display: flex; align-items: center;">
+                    <button class="mobile-menu-btn" id="mobileMenuToggle">☰</button>
+                    <h2>System Settings & Security</h2>
+                </div>
+                <div class="user-info">Welcome, User</div>
+            </header>
+
+            <main class="content-area">
+                <div class="grid-2-col">
+
+                    <!-- USER IDENTITY PROFILE -->
+                    <div class="panel-card p-20">
+                        <h3 class="mt-0">Identity & Access Management</h3>
+                        <p class="text-muted">Current session details securely pulled from Local Storage tokens.</p>
+
+                        <div
+                            style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <label
+                                    style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">Authenticated
+                                    User</label>
+                                <div id="settingUserName" style="font-size: 18px; font-weight: bold; color: #072a4f;">
+                                    Loading...</div>
+                            </div>
+
+                            <div>
+                                <label
+                                    style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">Clearance
+                                    Level (RBAC)</label>
+                                <div style="margin-top: 5px;">
+                                    <span id="settingUserRole" class="badge-success">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-bottom: 10px; color: #0f172a;">Enterprise Security Policies</h4>
+                        <ul
+                            style="font-size: 13px; color: #475569; line-height: 1.6; padding-left: 20px; margin-top: 0;">
+                            <li>All supply chain actions are immutably logged with the active user's signature.</li>
+                            <li>Financial ledger deletions are restricted to the MD designation.</li>
+                            <li>Session tokens will automatically expire after 24 hours of inactivity.</li>
+                        </ul>
+                    </div>
+
+                    <!-- SYSTEM PREFERENCES (UI Mockups for future scaling) -->
+                    <div class="panel-card p-20">
+                        <h3 class="mt-0">System Preferences</h3>
+                        <p class="text-muted">Configure your local workspace environment.</p>
+
+                        <form id="settingsForm">
+                            <div class="input-group">
+                                <label>Environment Theme</label>
+                                <select>
+                                    <option>Enterprise Light (Default)</option>
+                                    <option disabled>Factory Dark Mode (Coming Soon)</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Notification Alerts</label>
+                                <select>
+                                    <option>All Alerts (Inventory & Overdue Tasks)</option>
+                                    <option>Critical Only (System Outages)</option>
+                                    <option>Muted</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label>Default Export Format</label>
+                                <select>
+                                    <option>.CSV (Excel Compatible)</option>
+                                    <option disabled>.JSON (API Format)</option>
+                                </select>
+                            </div>
+
+                            <button type="button" class="btn-primary"
+                                onclick="alert('Preferences saved to local device cache.')">Save Preferences</button>
+                        </form>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/ui-handler.js"></script>
+</body>
+
+</html>

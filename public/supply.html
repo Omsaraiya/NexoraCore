@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraCore | Supply Chain</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/mobile.css">
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2>NexoraCore</h2>
+            </div>
+            <nav class="side-nav">
+                <a href="dashboard.html">Overview</a>
+                <a href="hr.html">HR & Access</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="inventory.html">Inventory Manager</a>
+                <a href="supply.html" class="active">Supply Chain</a>
+                <a href="finance.html">Financial Core</a>
+                <a href="production.html">Production Logs</a>
+                <a href="settings.html">System Settings</a>
+            </nav>
+            <div class="logout-section">
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </aside>
+
+        <!-- MAIN WRAPPER -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div style="display: flex; align-items: center;">
+                    <button class="mobile-menu-btn" id="mobileMenuToggle">☰</button>
+                    <h2>Procurement & Sales</h2>
+                </div>
+                <div class="user-info">Welcome, User</div>
+            </header>
+
+            <main class="content-area">
+                <div class="grid-2-col">
+                    <!-- DATA ENTRY FORM (Purchasing & Sales) -->
+                    <div class="panel-card p-20">
+                        <h3 class="mt-0">Log Supply Chain Event</h3>
+                        <p class="text-muted">Record material purchases or client sales.</p>
+
+                        <form id="supplyForm">
+                            <div class="input-group">
+                                <label for="supplyType">Event Type</label>
+                                <select id="supplyType" required>
+                                    <option value="Purchase">Purchase (Inbound Material)</option>
+                                    <option value="Sale">Sale (Outbound Product)</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="supplyItem">Item / Material Name</label>
+                                <input type="text" id="supplyItem" placeholder="e.g. Steel Sheets or Final Engine"
+                                    required>
+                            </div>
+                            <div class="grid-2-col" style="margin-bottom: 0;">
+                                <div class="input-group">
+                                    <label for="supplyQty">Quantity</label>
+                                    <input type="number" id="supplyQty" min="1" placeholder="e.g. 50" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="supplyValue">Total Value (₹)</label>
+                                    <input type="number" id="supplyValue" min="1" placeholder="e.g. 25000" required>
+                                </div>
+                            </div>
+                            <button type="submit" id="supplyBtn" class="btn-primary">Record Event</button>
+                        </form>
+                    </div>
+
+                    <!-- SUPPLY CHAIN LEDGER -->
+                    <div class="panel-card p-20">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 class="mt-0" style="margin-bottom: 0;">Supply Ledger</h3>
+                            <button onclick="exportTableToCSV('supply_ledger.csv')" class="btn-secondary"
+                                style="width: auto; padding: 6px 12px; font-size: 11px;">📥 Export CSV</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Item</th>
+                                        <th>Qty</th>
+                                        <th>Value (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supplyTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center">Syncing ledger...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="js/api.js"></script>
+    <script src="js/ui-handler.js"></script>
+</body>
+
+</html>

@@ -444,3 +444,108 @@ if (window.location.pathname.includes('finance.html')) {
         });
     }
 }
+
+// SUPPLY CHAIN LOGIC
+if (window.location.pathname.includes('supply.html')) {
+
+    async function loadSupplyLedger() {
+        const tbody = document.getElementById('supplyTableBody');
+        if (!tbody) return;
+
+        const data = await fetchSupplyLedger();
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No supply records found.</td></tr>`;
+            return;
+        }
+
+        // We use .slice().reverse() to show the newest entries at the top
+        data.slice().reverse().forEach((row) => {
+            const dateStr = row[0] || '-';
+            const type = row[1] || '-';
+            const item = row[2] || '-';
+            const qty = row[3] || '0';
+            const value = parseFloat(row[4]) || 0;
+
+            let typeBadge = type === 'Purchase'
+                ? '<span style="color: #ea580c; background: #ffedd5; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">PURCHASE</span>'
+                : '<span style="color: #3b82f6; background: #dbeafe; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">SALE</span>';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="color: #64748b; padding: 12px 15px;">${dateStr}</td>
+                <td style="padding: 12px 15px;">${typeBadge}</td>
+                <td style="font-weight: bold; color: #072a4f; padding: 12px 15px;">${item}</td>
+                <td style="padding: 12px 15px;">${qty}</td>
+                <td style="font-weight: bold; padding: 12px 15px;">₹${value.toLocaleString('en-IN')}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    loadSupplyLedger();
+
+    const supplyForm = document.getElementById('supplyForm');
+    if (supplyForm) {
+        supplyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('supplyBtn');
+            btn.textContent = "Recording...";
+            btn.disabled = true;
+
+            // Grab the currently logged-in user for the Audit Log
+            const currentUser = localStorage.getItem('nexora_session_name') || 'Unknown';
+            // Get today's date in YYYY-MM-DD format
+            const dateStr = new Date().toISOString().split('T')[0];
+
+            const payload = {
+                date: dateStr,
+                type: document.getElementById('supplyType').value,
+                item: document.getElementById('supplyItem').value.trim(),
+                qty: parseInt(document.getElementById('supplyQty').value),
+                value: parseFloat(document.getElementById('supplyValue').value),
+                user: currentUser
+            };
+
+            const result = await addSupplyEvent(payload);
+            if (result.success) {
+                supplyForm.reset();
+                loadSupplyLedger();
+            } else {
+                // This alerts the user if the backend rejected bad data
+                alert(result.message || "Failed to record event.");
+            }
+
+            btn.textContent = "Record Event";
+            btn.disabled = false;
+        });
+    }
+}
+
+// ==========================================
+// SYSTEM SETTINGS LOGIC
+// ==========================================
+if (window.location.pathname.includes('settings.html')) {
+    const nameDisplay = document.getElementById('settingUserName');
+    const roleDisplay = document.getElementById('settingUserRole');
+
+    if (nameDisplay && roleDisplay) {
+        const currentName = localStorage.getItem('nexora_session_name') || 'Unknown User';
+        const currentRole = localStorage.getItem('nexora_session_role') || 'Unauthorized';
+
+        nameDisplay.textContent = currentName;
+        roleDisplay.textContent = `${currentRole} Designation`;
+
+        // Dynamically change badge color based on Role power
+        if (currentRole === 'MD') {
+            roleDisplay.className = 'badge-success'; // Green for high clearance
+            roleDisplay.style.backgroundColor = '#dbeafe'; // Soft blue
+            roleDisplay.style.color = '#1d4ed8'; // Deep blue text
+        } else if (currentRole === 'Manager') {
+            roleDisplay.className = 'badge-success';
+        } else {
+            roleDisplay.className = 'badge-warning'; // Orange for restricted staff
+        }
+    }
+}

@@ -54,8 +54,10 @@
                 <a href="hr.html">HR & Access</a>
                 <a href="tasks.html" class="active">Task Manager</a>
                 <a href="inventory.html">Inventory Manager</a>
+                <a href="supply.html">Supply Chain</a>
                 <a href="finance.html">Financial Core</a>
                 <a href="production.html">Production Logs</a>
+                <a href="settings.html">System Settings</a>
             </nav>
             <div class="logout-section">
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
@@ -64,8 +66,11 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h3>Assign & Manage Tasks</h3>
-                <div class="user-profile"><span id="userNameDisplay">Welcome, MD001</span></div>
+                <div style="display: flex; align-items: center;">
+                    <button class="mobile-menu-btn" id="mobileMenuToggle">☰</button>
+                    <h2 style="margin: 0; margin-left: 10px;">Assign & Manage Tasks</h2>
+                </div>
+                <div class="user-info">Welcome, User</div>
             </header>
 
             <main class="content-area">

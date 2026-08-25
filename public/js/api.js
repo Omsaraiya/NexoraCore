@@ -103,3 +103,22 @@ async function registerEmployee(empData) {
         return await response.json();
     } catch (error) { return { success: false }; }
 }
+
+async function fetchSupplyLedger() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/supply`);
+        const result = await response.json();
+        return result.success ? result.data : [];
+    } catch (error) { return []; }
+}
+
+async function addSupplyEvent(payload) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/supply`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        return await response.json();
+    } catch (error) { return { success: false, message: "Network error" }; }
+}

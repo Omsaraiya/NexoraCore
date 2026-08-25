@@ -185,5 +185,58 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// 11. Fetch Supply Chain Ledger
+app.get('/api/supply', async (req, res) => {
+    try {
+        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Supply!A2:F' };
+        let data = await gsapi.spreadsheets.values.get(opt);
+        res.status(200).json({ success: true, data: data.data.values || [] });
+    } catch (error) {
+        console.error("❌ API Fetch Supply Error:", error.message);
+        res.status(500).json({ success: false });
+    }
+});
+
+// 12. Add Supply Chain Event (Strict Validation & Cross-Module Automation)
+app.post('/api/supply', async (req, res) => {
+    try {
+        const { date, type, item, qty, value, user } = req.body;
+
+        // --- PILLAR #3: STRICT DATA VALIDATION ---
+        if (!item || item.trim() === '') return res.status(400).json({ success: false, message: "Item name cannot be empty." });
+        if (qty <= 0) return res.status(400).json({ success: false, message: "Quantity must be greater than zero." });
+        if (value < 0) return res.status(400).json({ success: false, message: "Value cannot be negative." });
+
+        const auditLog = `Logged by ${user || 'Unknown User'}`;
+
+        // ACTION 1: Save to Supply Ledger
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Supply!A:F',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[date, type, item, qty, value, auditLog]] }
+        });
+
+        // ACTION 2: Auto-Sync to Financial Core
+        // Logic: Purchase = Expense (Money lost), Sale = Income (Money gained)
+        const financeType = type === 'Purchase' ? 'Expense' : 'Income';
+        const financeCategory = type === 'Purchase' ? 'Raw Materials' : 'Product Sales';
+        const financeDesc = `Auto-Synced from Supply: ${qty}x ${item}`;
+        const txnId = 'AUTO-' + Math.floor(100000 + Math.random() * 900000);
+
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Finance!A:F',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[txnId, date, financeType, financeCategory, value, financeDesc]] }
+        });
+
+        res.status(201).json({ success: true });
+    } catch (error) {
+        console.error("❌ API Add Supply Error:", error.message);
+        res.status(500).json({ success: false, message: "Server error." });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));
