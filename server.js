@@ -238,5 +238,45 @@ app.post('/api/supply', async (req, res) => {
     }
 });
 
+// 13. Log Attendance
+app.post('/api/attendance', async (req, res) => {
+    try {
+        const { empId } = req.body;
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Attendance!A:C',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[dateStr, empId, 'Present']] }
+        });
+        res.status(201).json({ success: true, message: "Shift logged successfully." });
+    } catch (err) { res.status(500).json({ success: false }); }
+});
+
+// 14. Run Payroll (Cross-Module Sync to Finance)
+app.post('/api/payroll', async (req, res) => {
+    try {
+        const { empId, user } = req.body;
+        const empResponse = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Employees!A:E' });
+        const employee = (empResponse.data.values || []).find(row => row[0] === empId);
+
+        if (!employee) return res.status(404).json({ success: false, message: "Employee not found." });
+
+        const role = employee[2];
+        const salary = role === 'MD' ? 150000 : (role === 'Manager' ? 70000 : 25000);
+        const txnId = 'PAY-' + Math.floor(100000 + Math.random() * 900000);
+        const dateStr = new Date().toISOString().split('T')[0];
+
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'Finance!A:F',
+            valueInputOption: 'USER_ENTERED',
+            resource: { values: [[txnId, dateStr, 'Expense', 'Salary', salary, `Auto-Payroll: ${empId} (${role}) | Logged by ${user}`]] }
+        });
+        res.status(200).json({ success: true, message: `₹${salary.toLocaleString('en-IN')} payroll disbursed for ${empId}.` });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));

@@ -42,6 +42,23 @@ window.exportTableToCSV = function (filename) {
 // ==========================================
 if (window.location.pathname.includes('hr.html')) {
 
+    // Modal Toggle Logic
+    const addModal = document.getElementById('addEmployeeModal');
+    const openBtn = document.getElementById('openAddEmployeeModal');
+    const closeBtn = document.getElementById('closeModalBtn');
+
+    if (openBtn && closeBtn && addModal) {
+        openBtn.addEventListener('click', () => addModal.classList.add('active'));
+        closeBtn.addEventListener('click', () => {
+            addModal.classList.remove('active');
+            document.getElementById('newCredentialsDisplay').style.display = 'none'; // reset success msg
+        });
+        // Close if user clicks outside the white box
+        addModal.addEventListener('click', (e) => {
+            if (e.target === addModal) addModal.classList.remove('active');
+        });
+    }
+
     async function loadDirectory() {
         const tbody = document.getElementById('hrTableBody');
         if (!tbody) return;
@@ -102,7 +119,7 @@ if (window.location.pathname.includes('hr.html')) {
                 hrForm.reset();
                 loadDirectory();
 
-                // Show credentials to the MD
+                // Show credentials in the modal
                 document.getElementById('newCredentialsDisplay').style.display = 'block';
                 document.getElementById('displayId').textContent = generatedId;
                 document.getElementById('displayKey').textContent = generatedKey;
@@ -112,6 +129,27 @@ if (window.location.pathname.includes('hr.html')) {
 
             btn.textContent = "Generate Credentials";
             btn.disabled = false;
+        });
+    }
+
+    const clockInBtn = document.getElementById('clockInBtn');
+    if (clockInBtn) {
+        clockInBtn.addEventListener('click', async () => {
+            const empId = document.getElementById('attEmpId').value.trim();
+            const res = await fetch('http://localhost:3000/api/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ empId }) });
+            const data = await res.json();
+            alert(data.message || "Shift logged.");
+        });
+    }
+
+    const runPayrollBtn = document.getElementById('runPayrollBtn');
+    if (runPayrollBtn) {
+        runPayrollBtn.addEventListener('click', async () => {
+            const empId = document.getElementById('payrollEmpId').value.trim();
+            const user = localStorage.getItem('nexora_session_name') || 'Unknown';
+            const res = await fetch('http://localhost:3000/api/payroll', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ empId, user }) });
+            const data = await res.json();
+            alert(data.message || "Payroll processed.");
         });
     }
 }

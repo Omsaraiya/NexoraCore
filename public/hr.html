@@ -39,58 +39,102 @@
             </header>
 
             <main class="content-area">
-                <div class="grid-2-col">
-                    <!-- PROVISIONING FORM -->
-                    <div class="panel-card p-20">
-                        <h3 class="mt-0">+ Provision New Employee</h3>
-                        <p class="text-muted">System will auto-generate ID and Passkey.</p>
-
-                        <form id="hrForm">
-                            <div class="input-group">
-                                <label for="empName">Full Name</label>
-                                <input type="text" id="empName" placeholder="e.g. Rahul Sharma" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="empRole">System Role</label>
-                                <select id="empRole" required>
-                                    <option value="Staff">Floor Staff (Restricted)</option>
-                                    <option value="Manager">Floor Manager</option>
-                                    <option value="MD">Managing Director (God View)</option>
-                                </select>
-                            </div>
-                            <button type="submit" id="hrSubmitBtn" class="btn-primary">Generate Credentials</button>
-                        </form>
-
-                        <!-- Secure display for newly generated credentials -->
-                        <div id="newCredentialsDisplay"
-                            style="display:none; margin-top: 20px; padding: 15px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
-                            <p><strong>Success! Hand these to the employee:</strong></p>
-                            <p>ID: <span id="displayId" style="color: #072a4f; font-weight: bold;"></span></p>
-                            <p>Key: <span id="displayKey" style="color: #dc2626; font-weight: bold;"></span></p>
+                <!-- HR DIRECTORY (FULL WIDTH) -->
+                <div class="panel-card p-20" style="margin-bottom: 25px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <h3 class="mt-0" style="margin-bottom: 5px;">Active Enterprise Directory</h3>
+                            <p class="text-muted" style="margin: 0;">Manage workforce, roles, and system access.</p>
                         </div>
+                        <button id="openAddEmployeeModal" class="btn-primary" style="width: auto; padding: 10px 20px;">+
+                            Add Employee</button>
                     </div>
 
-                    <!-- EMPLOYEE DIRECTORY -->
-                    <div class="panel-card">
-                        <h3>Active Enterprise Directory</h3>
+                    <div class="table-container">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Emp ID</th>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
+                                    <th>EMP ID</th>
+                                    <th>NAME</th>
+                                    <th>ROLE</th>
+                                    <th>STATUS</th>
                                 </tr>
                             </thead>
                             <tbody id="hrTableBody">
                                 <tr>
-                                    <td colspan="4" class="text-center">Syncing directory...</td>
+                                    <td colspan="4" style="text-align:center;">Syncing directory...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- ATTENDANCE & PAYROLL (HORIZONTAL LAYOUT) -->
+                <div class="panel-card p-20">
+                    <h3 class="mt-0" style="margin-bottom: 5px;">Daily Operations</h3>
+                    <p class="text-muted" style="margin-bottom: 20px;">Shop-floor time tracking and automated wage
+                        disbursement.</p>
+
+                    <div class="grid-2-col" style="margin: 0; gap: 30px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: bold; color: #475569;">MANUAL CLOCK-IN</label>
+                            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                <input type="text" id="attEmpId" placeholder="EMP-XXXX"
+                                    style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                                <button id="clockInBtn" class="btn-secondary" style="width: auto;">Log Shift</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: bold; color: #475569;">PROCESS SALARY</label>
+                            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                <input type="text" id="payrollEmpId" placeholder="EMP-XXXX"
+                                    style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                                <button id="runPayrollBtn" class="btn-primary"
+                                    style="width: auto; background-color: #16a34a;">Run Payroll</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
+
+            <!-- MODAL: ADD EMPLOYEE -->
+            <div id="addEmployeeModal" class="modal-overlay">
+                <div class="modal-content">
+                    <button id="closeModalBtn" class="modal-close">✖</button>
+                    <h3 class="mt-0">Provision New Employee</h3>
+                    <p class="text-muted">System will auto-generate ID and Passkey.</p>
+
+                    <form id="hrForm">
+                        <div class="input-group">
+                            <label for="empName">Full Name</label>
+                            <input type="text" id="empName" placeholder="e.g. Rahul Sharma" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="empRole">System Role</label>
+                            <select id="empRole">
+                                <option value="MD">Managing Director (Full Access)</option>
+                                <option value="Manager">Department Manager</option>
+                                <option value="Staff" selected>Floor Staff (Restricted)</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="hrSubmitBtn" class="btn-primary" style="margin-top: 10px;">Generate
+                            Credentials</button>
+                    </form>
+
+                    <div id="newCredentialsDisplay"
+                        style="display: none; margin-top: 20px; padding: 15px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                        <p style="margin: 0 0 10px 0; font-size: 13px; color: #166534; font-weight: bold;">✔
+                            Provisioning Successful</p>
+                        <div style="font-size: 12px; color: #14532d;">
+                            <strong>ID:</strong> <span id="displayId"
+                                style="font-family: monospace; font-size: 14px;"></span><br>
+                            <strong>Key:</strong> <span id="displayKey"
+                                style="font-family: monospace; font-size: 14px;"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script src="js/api.js"></script>
