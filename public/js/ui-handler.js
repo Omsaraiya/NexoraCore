@@ -19,6 +19,39 @@ if (userInfoDisplay) {
     userInfoDisplay.textContent = `Welcome, ${currentName}`;
 }
 
+// --- GLOBAL RBAC & SIDEBAR LOGIC ---
+const currentSystemRole = localStorage.getItem('nexora_session_role') || 'Guest';
+
+// 1. URL Routing Guard: Kick Staff out of restricted pages instantly
+const restrictedPages = ['hr.html', 'finance.html'];
+if (currentSystemRole === 'Staff' && restrictedPages.some(page => window.location.pathname.includes(page))) {
+    alert("🔒 Access Denied: Administrator clearance required.");
+    window.location.href = 'dashboard.html';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 2. UI Hiding: Remove Admin links from the DOM completely for Staff
+    if (currentSystemRole === 'Staff') {
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    }
+
+    // 3. Auto-Expand the active navigation group
+    const activeLink = document.querySelector('.side-nav a.active');
+    if (activeLink) {
+        const parentGroup = activeLink.closest('.nav-items');
+        if (parentGroup) {
+            parentGroup.classList.add('active');
+            parentGroup.previousElementSibling.classList.add('open');
+        }
+    }
+});
+
+// 4. Sidebar Accordion Toggle Function
+window.toggleNav = function (header) {
+    header.classList.toggle('open');
+    header.nextElementSibling.classList.toggle('active');
+};
+
 window.exportTableToCSV = function (filename) {
     const table = document.querySelector(".data-table");
     let csv = [];
