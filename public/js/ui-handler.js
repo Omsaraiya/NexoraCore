@@ -23,52 +23,18 @@ if (userInfoDisplay) {
 const currentSystemRole = localStorage.getItem('nexora_session_role') || 'Guest';
 
 // 1. URL Routing Guard: Kick Staff out of restricted pages instantly
-const restrictedPages = ['hr.html', 'finance.html'];
+const restrictedPages = ['dashboard.html', 'hr.html', 'finance.html', 'settings.html'];
 if (currentSystemRole === 'Staff' && restrictedPages.some(page => window.location.pathname.includes(page))) {
     alert("🔒 Access Denied: Administrator clearance required.");
-    window.location.href = 'dashboard.html';
+    window.location.href = 'tasks.html'; // Redirects staff to their primary workspace
 }
 
+// 2. UI Hiding: Remove Admin links from the sidebar completely for Staff
 document.addEventListener('DOMContentLoaded', () => {
-    // 2. UI Hiding: Remove Admin links from the DOM completely for Staff
     if (currentSystemRole === 'Staff') {
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
     }
-
-    // 3. Auto-Expand the active navigation group
-    const activeLink = document.querySelector('.side-nav a.active');
-    if (activeLink) {
-        const parentGroup = activeLink.closest('.nav-items');
-        if (parentGroup) {
-            parentGroup.classList.add('active');
-            parentGroup.previousElementSibling.classList.add('open');
-        }
-    }
 });
-
-// 4. Sidebar Accordion Toggle Function
-window.toggleNav = function (header) {
-    header.classList.toggle('open');
-    header.nextElementSibling.classList.toggle('active');
-};
-
-window.exportTableToCSV = function (filename) {
-    const table = document.querySelector(".data-table");
-    let csv = [];
-    const rows = table.querySelectorAll("tr");
-    for (let i = 0; i < rows.length; i++) {
-        let row = [], cols = rows[i].querySelectorAll("td, th");
-        for (let j = 0; j < cols.length; j++) {
-            row.push(cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/,/g, ""));
-        }
-        csv.push(row.join(","));
-    }
-    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
-    const downloadLink = document.createElement("a");
-    downloadLink.download = filename; downloadLink.href = window.URL.createObjectURL(csvFile);
-    downloadLink.style.display = "none"; document.body.appendChild(downloadLink);
-    downloadLink.click(); document.body.removeChild(downloadLink);
-}
 
 // ==========================================
 // HR & PROVISIONING LOGIC

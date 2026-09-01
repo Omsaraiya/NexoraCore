@@ -19,35 +19,14 @@
                 <h2>NexoraCore</h2>
             </div>
             <nav class="side-nav">
-                <!-- Group 1: Overview -->
-                <div class="nav-group">
-                    <div class="nav-header" onclick="toggleNav(this)">📊 Overview <span class="arrow">▼</span></div>
-                    <div class="nav-items">
-                        <a href="dashboard.html">Dashboard</a>
-                        <a href="production.html">Production Logs</a>
-                    </div>
-                </div>
-
-                <!-- Group 2: Operations -->
-                <div class="nav-group">
-                    <div class="nav-header" onclick="toggleNav(this)">🏭 Operations <span class="arrow">▼</span></div>
-                    <div class="nav-items">
-                        <a href="tasks.html">Task Manager</a>
-                        <a href="inventory.html">Inventory Manager</a>
-                        <a href="supply.html">Supply Chain</a>
-                    </div>
-                </div>
-
-                <!-- Group 3: Administration (RBAC Protected) -->
-                <div class="nav-group admin-only">
-                    <div class="nav-header" onclick="toggleNav(this)">⚙️ Administration <span class="arrow">▼</span>
-                    </div>
-                    <div class="nav-items">
-                        <a href="hr.html">HR & Access</a>
-                        <a href="finance.html">Financial Core</a>
-                        <a href="settings.html" class="active">System Settings</a>
-                    </div>
-                </div>
+                <a href="dashboard.html" class="admin-only">Overview</a>
+                <a href="hr.html" class="admin-only">HR & Access</a>
+                <a href="tasks.html">Task Manager</a>
+                <a href="inventory.html">Inventory Manager</a>
+                <a href="supply.html">Supply Chain</a>
+                <a href="finance.html" class="admin-only">Financial Core</a>
+                <a href="production.html">Production Logs</a>
+                <a href="settings.html" class="admin-only" class="active">System Settings</a>
             </nav>
             <div class="logout-section">
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
