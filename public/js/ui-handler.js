@@ -493,29 +493,38 @@ if (window.location.pathname.includes('supply.html')) {
         tbody.innerHTML = '';
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No supply records found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No supply records found.</td></tr>`;
             return;
         }
 
-        // We use .slice().reverse() to show the newest entries at the top
         data.slice().reverse().forEach((row) => {
-            const dateStr = row[0] || '-';
-            const type = row[1] || '-';
-            const item = row[2] || '-';
-            const qty = row[3] || '0';
-            const value = parseFloat(row[4]) || 0;
+            const docId = row[0] || '-';
+            const dateStr = row[1] || '-';
+            const type = row[2] || '-';
+            const partner = row[3] || '-';
+            const item = row[4] || '-';
+            const qty = row[5] || '0';
+            const value = parseFloat(row[6]) || 0;
+            const status = row[7] || 'Pending';
 
-            let typeBadge = type === 'Purchase'
-                ? '<span style="color: #ea580c; background: #ffedd5; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">PURCHASE</span>'
-                : '<span style="color: #3b82f6; background: #dbeafe; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">SALE</span>';
+            let typeBadge = type.includes('Purchase')
+                ? '<span style="color: #ea580c; background: #ffedd5; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">PO</span>'
+                : '<span style="color: #3b82f6; background: #dbeafe; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">SO</span>';
+
+            let statusBadge = status === 'Pending'
+                ? '<span style="color: #ca8a04; font-weight: 600; font-size: 13px;">⏳ Pending</span>'
+                : (status.includes('Dispatched') ? '<span style="color: #3b82f6; font-weight: 600; font-size: 13px;">🚚 Dispatched</span>' : '<span style="color: #16a34a; font-weight: 600; font-size: 13px;">✅ Invoiced</span>');
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
+                <td style="font-weight: bold; color: #072a4f; padding: 12px 15px;">${docId}</td>
                 <td style="color: #64748b; padding: 12px 15px;">${dateStr}</td>
                 <td style="padding: 12px 15px;">${typeBadge}</td>
-                <td style="font-weight: bold; color: #072a4f; padding: 12px 15px;">${item}</td>
+                <td style="font-weight: 500; padding: 12px 15px;">${partner}</td>
+                <td style="padding: 12px 15px;">${item}</td>
                 <td style="padding: 12px 15px;">${qty}</td>
                 <td style="font-weight: bold; padding: 12px 15px;">₹${value.toLocaleString('en-IN')}</td>
+                <td style="padding: 12px 15px;">${statusBadge}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -531,17 +540,17 @@ if (window.location.pathname.includes('supply.html')) {
             btn.textContent = "Recording...";
             btn.disabled = true;
 
-            // Grab the currently logged-in user for the Audit Log
             const currentUser = localStorage.getItem('nexora_session_name') || 'Unknown';
-            // Get today's date in YYYY-MM-DD format
             const dateStr = new Date().toISOString().split('T')[0];
 
             const payload = {
                 date: dateStr,
                 type: document.getElementById('supplyType').value,
+                partner: document.getElementById('supplyPartner').value.trim(),
                 item: document.getElementById('supplyItem').value.trim(),
                 qty: parseInt(document.getElementById('supplyQty').value),
                 value: parseFloat(document.getElementById('supplyValue').value),
+                status: document.getElementById('supplyStatus').value,
                 user: currentUser
             };
 
@@ -550,11 +559,10 @@ if (window.location.pathname.includes('supply.html')) {
                 supplyForm.reset();
                 loadSupplyLedger();
             } else {
-                // This alerts the user if the backend rejected bad data
                 alert(result.message || "Failed to record event.");
             }
 
-            btn.textContent = "Record Event";
+            btn.textContent = "Process Order";
             btn.disabled = false;
         });
     }

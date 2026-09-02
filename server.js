@@ -198,40 +198,53 @@ app.get('/api/supply', async (req, res) => {
 });
 
 // 12. Add Supply Chain Event (Strict Validation & Cross-Module Automation)
+// --- ENTERPRISE FY 26-27 DOCUMENT NUMBERING ENGINE ---
+async function getNextDocNumber(prefix, range) {
+    try {
+        const response = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range });
+        const rows = response.data.values || [];
+        const count = rows.length === 0 ? 1 : rows.length;
+        const paddedSequence = count.toString().padStart(4, '0');
+        return `${prefix}/26-27/${paddedSequence}`;
+    } catch (e) {
+        return `${prefix}/26-27/9999`;
+    }
+}
+
+// 12. Add Supply Chain Event (O2C Pipeline & Validation)
 app.post('/api/supply', async (req, res) => {
     try {
-        const { date, type, item, qty, value, user } = req.body;
+        const { date, type, partner, item, qty, value, status, user } = req.body;
 
-        // --- PILLAR #3: STRICT DATA VALIDATION ---
         if (!item || item.trim() === '') return res.status(400).json({ success: false, message: "Item name cannot be empty." });
         if (qty <= 0) return res.status(400).json({ success: false, message: "Quantity must be greater than zero." });
         if (value < 0) return res.status(400).json({ success: false, message: "Value cannot be negative." });
 
-        const auditLog = `Logged by ${user || 'Unknown User'}`;
+        let prefix = type.includes('Purchase') ? 'PO' : 'SO';
+        const docId = await getNextDocNumber(prefix, 'Supply!A:A');
+        const auditLog = `Logged by ${user || 'Unknown'}`;
 
-        // ACTION 1: Save to Supply Ledger
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'Supply!A:F',
+            range: 'Supply!A:I',
             valueInputOption: 'USER_ENTERED',
-            resource: { values: [[date, type, item, qty, value, auditLog]] }
+            resource: { values: [[docId, date, type, partner, item, qty, value, status, auditLog]] }
         });
 
-        // ACTION 2: Auto-Sync to Financial Core
-        // Logic: Purchase = Expense (Money lost), Sale = Income (Money gained)
-        const financeType = type === 'Purchase' ? 'Expense' : 'Income';
-        const financeCategory = type === 'Purchase' ? 'Raw Materials' : 'Product Sales';
-        const financeDesc = `Auto-Synced from Supply: ${qty}x ${item}`;
-        const txnId = 'AUTO-' + Math.floor(100000 + Math.random() * 900000);
+        const financeType = type.includes('Purchase') ? 'Expense' : 'Income';
+        const financeCategory = type.includes('Purchase') ? 'Supplier Payout' : 'Client Revenue';
+        const financeDesc = `Auto-Synced ${docId}: ${qty}x ${item} (${partner})`;
+
+        const invId = await getNextDocNumber('INV', 'Finance!A:A');
 
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
             range: 'Finance!A:F',
             valueInputOption: 'USER_ENTERED',
-            resource: { values: [[txnId, date, financeType, financeCategory, value, financeDesc]] }
+            resource: { values: [[invId, date, financeType, financeCategory, value, financeDesc]] }
         });
 
-        res.status(201).json({ success: true });
+        res.status(201).json({ success: true, docId });
     } catch (error) {
         console.error("❌ API Add Supply Error:", error.message);
         res.status(500).json({ success: false, message: "Server error." });

@@ -51,29 +51,47 @@
                         <p class="text-muted">Record material purchases or client sales.</p>
 
                         <form id="supplyForm">
-                            <div class="input-group">
-                                <label for="supplyType">Event Type</label>
-                                <select id="supplyType" required>
-                                    <option value="Purchase">Purchase (Inbound Material)</option>
-                                    <option value="Sale">Sale (Outbound Product)</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="supplyItem">Item / Material Name</label>
-                                <input type="text" id="supplyItem" placeholder="e.g. Steel Sheets or Final Engine"
-                                    required>
-                            </div>
                             <div class="grid-2-col" style="margin-bottom: 0;">
                                 <div class="input-group">
+                                    <label for="supplyType">Pipeline Stage</label>
+                                    <select id="supplyType" required>
+                                        <option value="Purchase Order (Procure-to-Pay)">Purchase Order (Procure-to-Pay)
+                                        </option>
+                                        <option value="Sales Order (Order-to-Cash)">Sales Order (Order-to-Cash)</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="supplyPartner">Client / Supplier Name</label>
+                                    <input type="text" id="supplyPartner" placeholder="e.g. Voltas, Havells..."
+                                        required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="supplyItem">Item / Material Name</label>
+                                <input type="text" id="supplyItem" placeholder="e.g. Thermal Overload Protector"
+                                    required>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                                <div class="input-group">
                                     <label for="supplyQty">Quantity</label>
-                                    <input type="number" id="supplyQty" min="1" placeholder="e.g. 50" required>
+                                    <input type="number" id="supplyQty" min="1" placeholder="e.g. 500" required>
                                 </div>
                                 <div class="input-group">
                                     <label for="supplyValue">Total Value (₹)</label>
-                                    <input type="number" id="supplyValue" min="1" placeholder="e.g. 25000" required>
+                                    <input type="number" id="supplyValue" min="0" placeholder="e.g. 25000" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="supplyStatus">Order Status</label>
+                                    <select id="supplyStatus" required>
+                                        <option value="Pending">Pending / Draft</option>
+                                        <option value="Dispatched / Delivered">Dispatched / Delivered</option>
+                                        <option value="Invoiced">Invoiced & Settled</option>
+                                    </select>
                                 </div>
                             </div>
-                            <button type="submit" id="supplyBtn" class="btn-primary">Record Event</button>
+                            <button type="submit" id="supplyBtn" class="btn-primary">Process Order</button>
                         </form>
                     </div>
 
@@ -89,11 +107,14 @@
                             <table class="data-table">
                                 <thead>
                                     <tr>
+                                        <th>Doc ID</th>
                                         <th>Date</th>
                                         <th>Type</th>
+                                        <th>Partner</th>
                                         <th>Item</th>
                                         <th>Qty</th>
                                         <th>Value (₹)</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="supplyTableBody">
