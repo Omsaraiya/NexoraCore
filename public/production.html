@@ -23,6 +23,7 @@
                 <a href="tasks.html">Task Manager</a>
                 <a href="inventory.html">Inventory Manager</a>
                 <a href="supply.html">Supply Chain</a>
+                <a href="qc.html" class="admin-only">Quality & Lab</a>
                 <a href="finance.html" class="admin-only">Financial Core</a>
                 <a href="production.html" class="active">Production Logs</a>
                 <a href="settings.html" class="admin-only">System Settings</a>
@@ -42,46 +43,70 @@
             </header>
 
             <main class="content-area">
-                <section class="panel-card" style="padding: 20px;">
+                <div class="grid-2-col">
+                    <!-- MES LOGGING FORM -->
+                    <div class="panel-card p-20">
+                        <h3 class="mt-0">Shop Floor MES</h3>
+                        <p class="text-muted">Log completed batches to update live inventory.</p>
 
-                    <div class="panel-header"
-                        style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h4 style="margin: 0; font-size: 16px; color: var(--text-main);">Complete Master Ledger</h4>
-                            <p style="margin: 5px 0 0 0; font-size: 13px; color: var(--text-muted);">Read-only view of
-                                all database entries.</p>
+                        <form id="productionForm">
+                            <div class="grid-2-col" style="margin-bottom: 0;">
+                                <div class="input-group">
+                                    <label>Finished Product Name</label>
+                                    <input type="text" id="prodItem" placeholder="e.g. Thermal Overload Protector"
+                                        required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Quantity Produced</label>
+                                    <input type="number" id="prodQty" min="1" required>
+                                </div>
+                            </div>
+
+                            <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 15px 0;">
+
+                            <div class="grid-2-col" style="margin-bottom: 0;">
+                                <div class="input-group">
+                                    <label>Raw Material Consumed</label>
+                                    <input type="text" id="rmItem" placeholder="e.g. Silver Contacts" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>RM Quantity Used</label>
+                                    <input type="number" id="rmQty" min="1" required>
+                                </div>
+                            </div>
+                            <button type="submit" id="prodBtn" class="btn-primary" style="margin-top: 10px;">Log
+                                Production Run</button>
+                        </form>
+                    </div>
+
+                    <!-- PRODUCTION LEDGER -->
+                    <div class="panel-card p-20">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 class="mt-0" style="margin-bottom: 0;">Production Ledger</h3>
+                            <button onclick="exportTableToCSV('production_ledger.csv')" class="btn-secondary"
+                                style="width: auto; padding: 6px 12px; font-size: 11px;">📥 Export CSV</button>
                         </div>
-                        <button onclick="exportTableToCSV('NexoraCore_Production_Logs.csv')"
-                            style="padding: 8px 15px; font-size: 13px; background-color: var(--primary-blue); color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                            Export to CSV
-                        </button>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>PRD ID</th>
+                                        <th>DATE</th>
+                                        <th>PRODUCT</th>
+                                        <th>QTY</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prodTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center">Syncing shop floor data...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-
-                    <div class="table-container" style="max-height: 600px; overflow-y: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Task</th>
-                                    <th>Status</th>
-                                    <th>Due Date</th>
-                                    <th>Completed At (Audit)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="productionTableBody">
-                                <tr>
-                                    <td colspan="5" style="text-align:center; padding: 20px;">Fetching master logs...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                </div>
             </main>
         </div>
     </div>

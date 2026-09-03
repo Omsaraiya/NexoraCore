@@ -291,5 +291,116 @@ app.post('/api/payroll', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// 15. Fetch Pending QC (Intercepts Supply Purchases)
+app.get('/api/qc/pending', async (req, res) => {
+    try {
+        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Supply!A2:I' };
+        let data = await gsapi.spreadsheets.values.get(opt);
+        const pending = [];
+        (data.data.values || []).forEach((row, index) => {
+            if (row[2] && row[2].includes('Purchase') && row[7] === 'Pending') {
+                pending.push({ rowIndex: index + 2, data: row });
+            }
+        });
+        res.status(200).json({ success: true, data: pending });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// 16. Process Quality Disposition
+app.post('/api/qc/process', async (req, res) => {
+    try {
+        const { rowIndex, poRef, item, qty, status, inspector, remarks } = req.body;
+        const dateStr = new Date().toISOString().split('T')[0];
+        const qcId = await getNextDocNumber('QC', 'Quality!A:A');
+
+        // 1. Log to NCR/CAPA Quality Ledger
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID, range: 'Quality!A:H', valueInputOption: 'USER_ENTERED',
+            resource: { values: [[qcId, dateStr, poRef, item, qty, status, inspector, remarks]] }
+        });
+
+        // 2. Clear from Supply Queue
+        await gsapi.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID, range: `Supply!H${rowIndex}`, valueInputOption: 'USER_ENTERED',
+            resource: { values: [['QC Processed']] }
+        });
+
+        // 3. Push to Live Inventory if Passed
+        if (status === 'Passed') {
+            const invId = 'RM-' + Math.floor(1000 + Math.random() * 9000);
+            await gsapi.spreadsheets.values.append({
+                spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E', valueInputOption: 'USER_ENTERED',
+                resource: { values: [[invId, item, 'Raw Material', qty, 50]] } // Default reorder threshold: 50
+            });
+        }
+        res.status(201).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// 17. Fetch Production Logs
+app.get('/api/production', async (req, res) => {
+    try {
+        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Production!A2:F' };
+        let data = await gsapi.spreadsheets.values.get(opt);
+        res.status(200).json({ success: true, data: data.data.values || [] });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// 18. Process Manufacturing Run (Inventory Math)
+app.post('/api/production', async (req, res) => {
+    try {
+        const { date, product, prodQty, rmItem, rmQty, user } = req.body;
+        const prodId = await getNextDocNumber('PRD', 'Production!A:A');
+
+        // 1. Log the Production Run
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID, range: 'Production!A:F', valueInputOption: 'USER_ENTERED',
+            resource: { values: [[prodId, date, product, prodQty, user, 'Completed']] }
+        });
+
+        // 2. Fetch Current Inventory for Adjustments
+        const invResp = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E' });
+        const invRows = invResp.data.values || [];
+        let fgUpdated = false;
+
+        // 3. Deduct RM & Add FG
+        for (let i = 1; i < invRows.length; i++) {
+            if (invRows[i][1] === rmItem) {
+                const newRmQty = parseInt(invRows[i][3]) - parseInt(rmQty);
+                await gsapi.spreadsheets.values.update({
+                    spreadsheetId: SPREADSHEET_ID, range: `Inventory!D${i + 1}`, valueInputOption: 'USER_ENTERED',
+                    resource: { values: [[newRmQty]] }
+                });
+            }
+            if (invRows[i][1] === product) {
+                const newFgQty = parseInt(invRows[i][3] || 0) + parseInt(prodQty);
+                await gsapi.spreadsheets.values.update({
+                    spreadsheetId: SPREADSHEET_ID, range: `Inventory!D${i + 1}`, valueInputOption: 'USER_ENTERED',
+                    resource: { values: [[newFgQty]] }
+                });
+                fgUpdated = true;
+            }
+        }
+
+        // 4. If Finished Good doesn't exist yet, create it
+        if (!fgUpdated) {
+            const invId = 'FG-' + Math.floor(1000 + Math.random() * 9000);
+            await gsapi.spreadsheets.values.append({
+                spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E', valueInputOption: 'USER_ENTERED',
+                resource: { values: [[invId, product, 'Finished Good', prodQty, 100]] }
+            });
+        }
+        res.status(201).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 API Server running on http://localhost:${PORT}`));

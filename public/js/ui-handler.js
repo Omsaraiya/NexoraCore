@@ -594,3 +594,144 @@ if (window.location.pathname.includes('settings.html')) {
         }
     }
 }
+
+// ==========================================
+// QUALITY CONTROL (QC) LOGIC
+// ==========================================
+if (window.location.pathname.includes('qc.html')) {
+    async function loadPendingQC() {
+        const tbody = document.getElementById('qcTableBody');
+        if (!tbody) return;
+
+        const res = await fetch('http://localhost:3000/api/qc/pending');
+        const result = await res.json();
+        tbody.innerHTML = '';
+
+        if (!result.data || result.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No pending materials awaiting inspection.</td></tr>`;
+            return;
+        }
+
+        result.data.forEach((obj) => {
+            const row = obj.data;
+            const rowIndex = obj.rowIndex;
+            const poRef = row[0];
+            const date = row[1];
+            const item = row[4];
+            const qty = row[5];
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: bold; color: #072a4f; padding: 12px 15px;">${poRef}</td>
+                <td style="padding: 12px 15px;">${date}</td>
+                <td style="padding: 12px 15px;">${item}</td>
+                <td style="font-weight: bold; padding: 12px 15px;">${qty}</td>
+                <td style="padding: 12px 15px;"><span style="color: #ca8a04; background: #fef08a; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px;">⏳ Awaiting IQC</span></td>
+                <td style="padding: 12px 15px;">
+                    <button onclick="processQC(${rowIndex}, '${poRef}', '${item}', ${qty}, 'Passed')" style="background: #16a34a; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;">✔ Pass</button>
+                    <button onclick="processQC(${rowIndex}, '${poRef}', '${item}', ${qty}, 'Rejected')" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">✖ Reject</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.processQC = async function (rowIndex, poRef, item, qty, status) {
+        const defaultRemark = status === 'Passed' ? "Visual and dimensional checks passed." : "Out of tolerance / Material defect.";
+        const remarks = prompt(`Enter inspection remarks for ${item} (${status}):`, defaultRemark);
+        if (remarks === null) return;
+
+        event.target.textContent = "...";
+        event.target.disabled = true;
+
+        const inspector = localStorage.getItem('nexora_session_name') || 'Unknown';
+        const payload = { rowIndex, poRef, item, qty, status, inspector, remarks };
+
+        const res = await fetch('http://localhost:3000/api/qc/process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            loadPendingQC();
+        } else {
+            alert("Failed to process QC disposition.");
+        }
+    };
+
+    loadPendingQC();
+}
+
+// ==========================================
+// PRODUCTION & MES LOGIC
+// ==========================================
+if (window.location.pathname.includes('production.html')) {
+    async function loadProductionLedger() {
+        const tbody = document.getElementById('prodTableBody');
+        if (!tbody) return;
+
+        const res = await fetch('http://localhost:3000/api/production');
+        const result = await res.json();
+        tbody.innerHTML = '';
+
+        if (!result.data || result.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No production runs logged.</td></tr>`;
+            return;
+        }
+
+        result.data.slice().reverse().forEach((row) => {
+            const prodId = row[0];
+            const dateStr = row[1];
+            const item = row[2];
+            const qty = row[3];
+            const statusBadge = '<span style="color: #16a34a; background: #dcfce7; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">✔ Completed</span>';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: bold; color: #072a4f;">${prodId}</td>
+                <td style="color: #64748b;">${dateStr}</td>
+                <td>${item}</td>
+                <td style="font-weight: bold;">${qty}</td>
+                <td>${statusBadge}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    loadProductionLedger();
+
+    const prodForm = document.getElementById('productionForm');
+    if (prodForm) {
+        prodForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('prodBtn');
+            btn.textContent = "Logging..."; btn.disabled = true;
+
+            const payload = {
+                date: new Date().toISOString().split('T')[0],
+                product: document.getElementById('prodItem').value.trim(),
+                prodQty: parseInt(document.getElementById('prodQty').value),
+                rmItem: document.getElementById('rmItem').value.trim(),
+                rmQty: parseInt(document.getElementById('rmQty').value),
+                user: localStorage.getItem('nexora_session_name') || 'Operator'
+            };
+
+            const res = await fetch('http://localhost:3000/api/production', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                prodForm.reset();
+                loadProductionLedger();
+                alert("Production logged. Inventory has been updated automatically.");
+            } else {
+                alert("Failed to log production.");
+            }
+            btn.textContent = "Log Production Run"; btn.disabled = false;
+        });
+    }
+}
