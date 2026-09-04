@@ -210,6 +210,31 @@ if (window.location.pathname.includes('dashboard.html')) {
         if (document.getElementById('godActiveTasks')) document.getElementById('godActiveTasks').textContent = activeTasksCount;
         if (document.getElementById('godDelayedTasks')) document.getElementById('godDelayedTasks').textContent = delayedTasksCount;
         if (document.getElementById('godInventoryAlerts')) document.getElementById('godInventoryAlerts').textContent = lowStockCount;
+
+        // --- RESTORED CHART.JS LOGIC WITH CORRECTED MATH ---
+        const ctx = document.getElementById('workflowChart');
+        if (ctx) {
+            if (window.workflowChartInstance) window.workflowChartInstance.destroy();
+
+            // Explicitly count completed tasks by filtering the raw data
+            const completedCount = (tasks || []).filter(row => row[2] === 'Completed').length;
+            // Subtract delayed from active so they aren't double-counted in the bar graph
+            const onTimeActiveCount = Math.max(0, activeTasksCount - delayedTasksCount);
+
+            window.workflowChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Active (On Time)', 'Completed', 'Delayed'],
+                    datasets: [{
+                        data: [onTimeActiveCount, completedCount, delayedTasksCount],
+                        backgroundColor: ['rgba(59, 130, 246, 0.2)', 'rgba(22, 163, 74, 0.2)', 'rgba(220, 38, 38, 0.2)'],
+                        borderColor: ['#3b82f6', '#16a34a', '#dc2626'],
+                        borderWidth: 2, borderRadius: 4, barThickness: 30
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+            });
+        }
     }
     loadGodView();
 }
