@@ -5,10 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexoraCore | Secure Access</title>
-    <!-- Lightweight eye icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- LINKING OUR EXTERNAL ENTERPRISE CSS -->
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/auth.css">
 </head>
@@ -21,7 +18,6 @@
         </div>
 
         <form id="loginForm">
-            <!-- Centralized Single-Factory Credentials -->
             <div class="input-group">
                 <label for="empId">Employee ID</label>
                 <input type="text" id="empId" required autocomplete="username" placeholder="e.g. MD001">
@@ -45,7 +41,6 @@
             <div id="errorMsg"></div>
         </form>
 
-        <!-- New Employee Workflow -->
         <div class="footer-action">
             New Employee? <br>
             <a href="#"
@@ -54,20 +49,16 @@
         </div>
     </div>
 
-    <!-- LINKING OUR MODULAR JAVASCRIPT -->
     <script src="js/auth.js"></script>
     <script>
-        // Password Show/Hide Toggle
         document.getElementById('togglePassword').addEventListener('click', function () {
             const pwdInput = document.getElementById('authKey');
             if (pwdInput.type === 'password') {
                 pwdInput.type = 'text';
-                this.classList.remove('fa-eye');
-                this.classList.add('fa-eye-slash');
+                this.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 pwdInput.type = 'password';
-                this.classList.remove('fa-eye-slash');
-                this.classList.add('fa-eye');
+                this.classList.replace('fa-eye-slash', 'fa-eye');
             }
         });
     </script>

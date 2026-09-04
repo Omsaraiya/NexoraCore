@@ -145,11 +145,14 @@
     border-bottom: 1px solid var(--border-color);
 }
 
+/* Update your existing Data Tables block in layout.css */
 .data-table td {
     padding: 12px 20px;
     font-size: 13px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+    /* Critical for financial data alignment */
 }
 
 .data-table tr:hover {

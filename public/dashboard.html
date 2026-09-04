@@ -7,19 +7,18 @@
     <title>NexoraCore | Executive Dashboard</title>
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/layout.css">
-    <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
     <div class="dashboard-layout">
-        <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <h2>NexoraCore</h2>
             </div>
             <nav class="side-nav">
-                <a href="dashboard.html" class="admin-only" class="active">Overview</a>
+                <!-- Resolved duplicate class attribute here -->
+                <a href="dashboard.html" class="admin-only active">Overview</a>
                 <a href="hr.html" class="admin-only">HR & Access</a>
                 <a href="tasks.html">Task Manager</a>
                 <a href="inventory.html">Inventory Manager</a>
@@ -34,15 +33,13 @@
             </div>
         </aside>
 
-        <!-- MAIN WRAPPER -->
         <div class="main-wrapper">
             <header class="topbar">
                 <h2>Executive "God View" Dashboard</h2>
-                <div class="user-info">Welcome, MD001</div>
+                <div class="user-info">Welcome, User</div>
             </header>
 
             <main class="content-area">
-                <!-- ENTERPRISE KPI CARDS -->
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
                     <div class="panel-card" style="padding: 20px; border-left: 4px solid #3b82f6;">
                         <h4 style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Active Tasks
@@ -67,10 +64,7 @@
                     </div>
                 </div>
 
-                <!-- DATA VISUALIZATION & LEDGER -->
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 20px;">
-
-                    <!-- CHART -->
                     <div class="panel-card" style="padding: 20px;">
                         <h3 style="margin-top: 0; font-size: 15px; color: #0f172a;">Task Workflow</h3>
                         <div style="height: 220px;">
@@ -78,7 +72,6 @@
                         </div>
                     </div>
 
-                    <!-- LIVE PRODUCTION LEDGER -->
                     <div class="panel-card">
                         <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;">
                             <h3 style="margin: 0; font-size: 15px; color: #0f172a;">Live Production Ledger</h3>
@@ -106,7 +99,6 @@
         </div>
     </div>
 
-    <!-- Decoupled Logic -->
     <script src="js/api.js"></script>
     <script src="js/ui-handler.js"></script>
 </body>

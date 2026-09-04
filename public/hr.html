@@ -11,15 +11,13 @@
 
 <body>
     <div class="dashboard-layout">
-        <!-- SIDEBAR -->
-        <!-- STANDARDIZED COLLAPSIBLE SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <h2>NexoraCore</h2>
             </div>
             <nav class="side-nav">
                 <a href="dashboard.html" class="admin-only">Overview</a>
-                <a href="hr.html" class="admin-only" class="active">HR & Access</a>
+                <a href="hr.html" class="admin-only active">HR & Access</a>
                 <a href="tasks.html">Task Manager</a>
                 <a href="inventory.html">Inventory Manager</a>
                 <a href="supply.html">Supply Chain</a>
@@ -33,15 +31,13 @@
             </div>
         </aside>
 
-        <!-- MAIN WRAPPER -->
         <div class="main-wrapper">
             <header class="topbar">
                 <h2>Human Resources & Provisioning</h2>
-                <div class="user-info">Welcome, MD001</div>
+                <div class="user-info">Welcome, User</div>
             </header>
 
             <main class="content-area">
-                <!-- HR DIRECTORY (FULL WIDTH) -->
                 <div class="panel-card p-20" style="margin-bottom: 25px;">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -49,8 +45,12 @@
                             <h3 class="mt-0" style="margin-bottom: 5px;">Active Enterprise Directory</h3>
                             <p class="text-muted" style="margin: 0;">Manage workforce, roles, and system access.</p>
                         </div>
-                        <button id="openAddEmployeeModal" class="btn-primary" style="width: auto; padding: 10px 20px;">+
-                            Add Employee</button>
+                        <div>
+                            <button onclick="exportTableToCSV('hr_directory.csv')" class="btn-secondary"
+                                style="width: auto; padding: 10px 20px; margin-right: 10px;">📥 Export CSV</button>
+                            <button id="openAddEmployeeModal" class="btn-primary"
+                                style="width: auto; padding: 10px 20px;">+ Add Employee</button>
+                        </div>
                     </div>
 
                     <div class="table-container">
@@ -72,7 +72,6 @@
                     </div>
                 </div>
 
-                <!-- ATTENDANCE & PAYROLL (HORIZONTAL LAYOUT) -->
                 <div class="panel-card p-20">
                     <h3 class="mt-0" style="margin-bottom: 5px;">Daily Operations</h3>
                     <p class="text-muted" style="margin-bottom: 20px;">Shop-floor time tracking and automated wage
@@ -100,7 +99,6 @@
                 </div>
             </main>
 
-            <!-- MODAL: ADD EMPLOYEE -->
             <div id="addEmployeeModal" class="modal-overlay">
                 <div class="modal-content">
                     <button id="closeModalBtn" class="modal-close">✖</button>

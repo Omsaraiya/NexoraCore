@@ -10,7 +10,6 @@
 </head>
 
 <body>
-
     <div class="dashboard-layout">
         <!-- STANDARDIZED COLLAPSIBLE SIDEBAR -->
         <aside class="sidebar">
@@ -24,7 +23,7 @@
                 <a href="inventory.html">Inventory Manager</a>
                 <a href="supply.html">Supply Chain</a>
                 <a href="qc.html" class="admin-only">Quality & Lab</a>
-                <a href="finance.html" class="admin-only" class="active">Financial Core</a>
+                <a href="finance.html" class="admin-only active">Financial Core</a>
                 <a href="production.html">Production Logs</a>
                 <a href="settings.html" class="admin-only">System Settings</a>
             </nav>
@@ -35,8 +34,10 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h2>Financial Command Center</h2>
-                <div class="user-info">Welcome, MD001</div>
+                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    📑 Financial Command Center
+                </h2>
+                <div class="user-info">Welcome, User</div>
             </header>
 
             <main class="content-area">
@@ -125,24 +126,34 @@
                 </div>
 
                 <div class="panel-card">
-                    <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
-                        <thead>
-                            <tr
-                                style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase;">
-                                <th style="padding: 12px 8px;">Date</th>
-                                <th style="padding: 12px 8px;">TXN ID</th>
-                                <th style="padding: 12px 8px;">Type</th>
-                                <th style="padding: 12px 8px;">Category</th>
-                                <th style="padding: 12px 8px;">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="financeTableBody">
-                            <tr>
-                                <td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">Loading
-                                    financial records...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e2e8f0;">
+                        <h3 style="margin: 0; font-size: 16px; color: #0f172a;">Financial Ledger</h3>
+                        <button onclick="exportTableToCSV('finance_ledger.csv')" class="btn-secondary"
+                            style="width: auto; padding: 6px 12px; font-size: 11px;">📥 Export CSV</button>
+                    </div>
+
+                    <!-- SCROLLABLE CONTAINER RESTORED -->
+                    <div class="table-container">
+                        <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                            <thead>
+                                <tr
+                                    style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase;">
+                                    <th style="padding: 12px 20px;">Date</th>
+                                    <th style="padding: 12px 20px;">TXN ID</th>
+                                    <th style="padding: 12px 20px;">Type</th>
+                                    <th style="padding: 12px 20px;">Category</th>
+                                    <th style="padding: 12px 20px;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financeTableBody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; padding: 20px; color: #64748b;">Loading
+                                        financial records...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </main>
         </div>

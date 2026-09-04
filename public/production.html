@@ -10,9 +10,7 @@
 </head>
 
 <body>
-
     <div class="dashboard-layout">
-        <!-- STANDARDIZED COLLAPSIBLE SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <h2>NexoraCore</h2>
@@ -44,7 +42,6 @@
 
             <main class="content-area">
                 <div class="grid-2-col">
-                    <!-- MES LOGGING FORM -->
                     <div class="panel-card p-20">
                         <h3 class="mt-0">Shop Floor MES</h3>
                         <p class="text-muted">Log completed batches to update live inventory.</p>
@@ -79,7 +76,6 @@
                         </form>
                     </div>
 
-                    <!-- PRODUCTION LEDGER -->
                     <div class="panel-card p-20">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -113,40 +109,6 @@
 
     <script src="js/api.js"></script>
     <script src="js/ui-handler.js"></script>
-    <script>
-        async function loadProductionLogs() {
-            const tbody = document.getElementById('productionTableBody');
-            const data = await fetchDashboardStats();
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No logs found.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = '';
-            data.forEach((row) => {
-                const tr = document.createElement('tr');
-                const auditTime = row[4] ? `<span style="color: #16a34a; font-size: 12px; font-weight: 500;">${row[4]}</span>` : '<span style="color: #94a3b8; font-size: 12px;">Pending</span>';
-
-                let statusStyle = '';
-                if (row[2] === 'Completed') {
-                    statusStyle = '<span style="color: #16a34a; background: #dcfce7; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Completed</span>';
-                } else {
-                    statusStyle = '<span style="color: #ea580c; background: #ffedd5; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Pending</span>';
-                }
-
-                tr.innerHTML = `
-                    <td><strong>${row[0] || 'N/A'}</strong></td>
-                    <td>${row[1] || 'N/A'}</td>
-                    <td>${statusStyle}</td>
-                    <td>${row[3] || 'N/A'}</td>
-                    <td>${auditTime}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-        loadProductionLogs();
-    </script>
 </body>
 
 </html>

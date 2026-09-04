@@ -7,13 +7,10 @@
     <title>NexoraCore | Supply Chain</title>
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/mobile.css">
 </head>
 
 <body>
     <div class="dashboard-layout">
-        <!-- SIDEBAR -->
-        <!-- STANDARDIZED COLLAPSIBLE SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <h2>NexoraCore</h2>
@@ -34,19 +31,17 @@
             </div>
         </aside>
 
-        <!-- MAIN WRAPPER -->
         <div class="main-wrapper">
             <header class="topbar">
                 <div style="display: flex; align-items: center;">
                     <button class="mobile-menu-btn" id="mobileMenuToggle">☰</button>
-                    <h2>Procurement & Sales</h2>
+                    <h2 style="margin: 0; margin-left: 10px;">Procurement & Sales</h2>
                 </div>
                 <div class="user-info">Welcome, User</div>
             </header>
 
             <main class="content-area">
                 <div class="grid-2-col">
-                    <!-- DATA ENTRY FORM (Purchasing & Sales) -->
                     <div class="panel-card p-20">
                         <h3 class="mt-0">Log Supply Chain Event</h3>
                         <p class="text-muted">Record material purchases or client sales.</p>
@@ -96,7 +91,6 @@
                         </form>
                     </div>
 
-                    <!-- SUPPLY CHAIN LEDGER -->
                     <div class="panel-card p-20">
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -120,7 +114,7 @@
                                 </thead>
                                 <tbody id="supplyTableBody">
                                     <tr>
-                                        <td colspan="5" class="text-center">Syncing ledger...</td>
+                                        <td colspan="8" class="text-center">Syncing ledger...</td>
                                     </tr>
                                 </tbody>
                             </table>

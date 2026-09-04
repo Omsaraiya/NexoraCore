@@ -10,9 +10,7 @@
 </head>
 
 <body>
-
     <div class="dashboard-layout">
-        <!-- STANDARDIZED COLLAPSIBLE SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
                 <h2>NexoraCore</h2>
@@ -36,19 +34,25 @@
         <div class="main-wrapper">
             <header class="topbar">
                 <h2>Warehouse & Inventory</h2>
-                <div class="user-info">Welcome, MD001</div>
+                <div class="user-info">Welcome, User</div>
             </header>
 
             <main class="content-area">
                 <div class="panel-card">
                     <div class="panel-header"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding: 20px; border-bottom: 1px solid #e2e8f0;">
                         <div>
                             <h3 style="margin: 0; color: #0f172a; font-size: 18px;">Live Stock Ledger</h3>
                             <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Real-time tracking of raw
                                 materials and finished goods.</p>
                         </div>
-                        <button class="btn-primary" style="padding: 8px 16px; font-size: 13px;">+ Add New Item</button>
+                        <div>
+                            <button onclick="exportTableToCSV('inventory_ledger.csv')" class="btn-secondary"
+                                style="margin-right: 10px; width: auto; padding: 8px 16px; font-size: 13px;">📥 Export
+                                CSV</button>
+                            <button class="btn-primary" style="padding: 8px 16px; font-size: 13px; width: auto;">+ Add
+                                New Item</button>
+                        </div>
                     </div>
 
                     <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
@@ -73,7 +77,6 @@
             </main>
         </div>
     </div>
-
     <script src="js/api.js"></script>
     <script src="js/ui-handler.js"></script>
 </body>
