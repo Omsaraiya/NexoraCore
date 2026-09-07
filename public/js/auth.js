@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (result.success) {
+                    // Securely store the JWT token alongside the RBAC roles
+                    localStorage.setItem('nexora_token', result.token);
                     localStorage.setItem('nexora_session_role', result.role);
                     localStorage.setItem('nexora_session_name', result.name);
 

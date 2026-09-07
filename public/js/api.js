@@ -1,15 +1,23 @@
-// Relative path ensures the app works seamlessly on local network or cloud host
 const API_BASE_URL = '';
-// Python microservice (Requires CORS configuration on the Python server for production)
 const PYTHON_ENGINE_URL = 'http://127.0.0.1:5000';
 
-// Centralized API handler to eliminate repetitive fetch/catch blocks
 async function apiCall(endpoint, method = 'GET', body = null) {
     try {
-        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        const token = localStorage.getItem('nexora_token');
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : ''
+            }
+        };
         if (body) options.body = JSON.stringify(body);
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        if (response.status === 401 || response.status === 403) {
+            console.warn("Unauthorized access. Token missing or expired.");
+            window.location.href = 'index.html'; // Force logout on token expiry
+        }
         return await response.json();
     } catch (error) {
         console.error(`API Error (${endpoint}):`, error);
@@ -29,7 +37,6 @@ const registerEmployee = async (empData) => await apiCall('/api/employees', 'POS
 const fetchSupplyLedger = async () => (await apiCall('/api/supply')).data || [];
 const addSupplyEvent = async (payload) => await apiCall('/api/supply', 'POST', payload);
 
-// Python Microservice Connector
 async function calculateTaxWithPython(income, expense) {
     try {
         const response = await fetch(`${PYTHON_ENGINE_URL}/api/calculate-tax`, {
@@ -39,7 +46,6 @@ async function calculateTaxWithPython(income, expense) {
         });
         return await response.json();
     } catch (error) {
-        console.warn("Python Engine Offline/Skipped.");
         return { success: false };
     }
 }

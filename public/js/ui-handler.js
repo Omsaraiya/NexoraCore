@@ -35,6 +35,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
         localStorage.removeItem('nexora_session_role');
+        localStorage.removeItem('nexora_token'); // Deletes the secure JWT
         window.location.href = 'index.html';
     });
 }

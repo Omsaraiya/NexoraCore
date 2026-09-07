@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const { google } = require('googleapis');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cors());
@@ -22,7 +24,6 @@ auth.getClient()
     .then(() => console.log("✅ Securely Connected to Google Sheets API"))
     .catch(err => console.error("❌ Google API Connection Error:", err.message));
 
-// --- ENTERPRISE FY 26-27 DOCUMENT NUMBERING ENGINE ---
 async function getNextDocNumber(prefix, range) {
     try {
         const response = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range });
@@ -34,7 +35,9 @@ async function getNextDocNumber(prefix, range) {
     }
 }
 
-// --- API ENDPOINTS ---
+// ---------------------------------------------------------
+// PUBLIC ROUTES
+// ---------------------------------------------------------
 
 app.post('/api/login', async (req, res) => {
     try {
@@ -43,9 +46,17 @@ app.post('/api/login', async (req, res) => {
         const rows = response.data.values || [];
 
         for (let i = 1; i < rows.length; i++) {
-            if (rows[i][0] === empId && rows[i][3] === passkey) {
+            if (rows[i][0] === empId) {
                 if (rows[i][4] !== 'Active') return res.status(403).json({ success: false, message: "Account is suspended." });
-                return res.json({ success: true, role: rows[i][2], name: rows[i][1] });
+
+                // Check if passkey matches bcrypt hash OR legacy plaintext
+                const validPassword = await bcrypt.compare(passkey, rows[i][3]).catch(() => false);
+                const isLegacy = passkey === rows[i][3];
+
+                if (validPassword || isLegacy) {
+                    const token = jwt.sign({ empId: rows[i][0], role: rows[i][2], name: rows[i][1] }, process.env.JWT_SECRET, { expiresIn: '24h' });
+                    return res.json({ success: true, token, role: rows[i][2], name: rows[i][1] });
+                }
             }
         }
         return res.status(401).json({ success: false, message: "Invalid ID or Passkey." });
@@ -54,27 +65,51 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// ---------------------------------------------------------
+// GLOBAL JWT SECURITY MIDDLEWARE
+// ---------------------------------------------------------
+
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ success: false, message: "Access Denied. No token provided." });
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ success: false, message: "Invalid or expired token." });
+        req.user = user; // Injects verified user data into the request
+        next();
+    });
+}
+
+app.use('/api', authenticateToken); // Locks down EVERY route below this line
+
+// ---------------------------------------------------------
+// PROTECTED API ENDPOINTS
+// ---------------------------------------------------------
+
 app.get('/api/dashboard', async (req, res) => {
     try {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Sheet1!A2:F' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) {
-        res.status(500).json({ success: false, error: "Failed to fetch data" });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/employees', async (req, res) => {
     try {
         const { empId, name, role, passkey, status } = req.body;
+
+        // Hash the password before saving to Google Sheets
+        const salt = await bcrypt.genSalt(10);
+        const hashedKey = await bcrypt.hash(passkey, salt);
+
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Employees!A:E', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[empId, name, role, passkey, status]] }
+            resource: { values: [[empId, name, role, hashedKey, status]] }
         });
         res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/employees', async (req, res) => {
@@ -82,9 +117,7 @@ app.get('/api/employees', async (req, res) => {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Employees!A2:C' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/attendance', async (req, res) => {
@@ -96,9 +129,7 @@ app.post('/api/attendance', async (req, res) => {
             resource: { values: [[dateStr, empId, 'Present']] }
         });
         res.status(201).json({ success: true, message: "Shift logged successfully." });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    } catch (err) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/payroll', async (req, res) => {
@@ -119,9 +150,7 @@ app.post('/api/payroll', async (req, res) => {
             resource: { values: [[txnId, dateStr, 'Expense', 'Salary', salary, `Auto-Payroll: ${empId} (${role}) | Logged by ${user}`]] }
         });
         res.status(200).json({ success: true, message: `₹${salary.toLocaleString('en-IN')} payroll disbursed for ${empId}.` });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/tasks', async (req, res) => {
@@ -132,9 +161,7 @@ app.post('/api/tasks', async (req, res) => {
             resource: { values: [[employee, task, status, date]] }
         });
         res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.put('/api/tasks/complete', async (req, res) => {
@@ -146,9 +173,7 @@ app.put('/api/tasks/complete', async (req, res) => {
         await gsapi.spreadsheets.values.update({ spreadsheetId: SPREADSHEET_ID, range: `Sheet1!C${actualRow}`, valueInputOption: 'USER_ENTERED', resource: { values: [['Completed']] } });
         await gsapi.spreadsheets.values.update({ spreadsheetId: SPREADSHEET_ID, range: `Sheet1!E${actualRow}`, valueInputOption: 'USER_ENTERED', resource: { values: [[timestamp]] } });
         res.status(200).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.put('/api/tasks/qa', async (req, res) => {
@@ -159,9 +184,7 @@ app.put('/api/tasks/qa', async (req, res) => {
             spreadsheetId: SPREADSHEET_ID, range: `Sheet1!F${actualRow}`, valueInputOption: 'USER_ENTERED', resource: { values: [[qaStatus]] }
         });
         res.status(200).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/inventory', async (req, res) => {
@@ -169,9 +192,7 @@ app.get('/api/inventory', async (req, res) => {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A2:E' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/supply', async (req, res) => {
@@ -179,19 +200,12 @@ app.get('/api/supply', async (req, res) => {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Supply!A2:H' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/supply', async (req, res) => {
     try {
         const { date, type, partner, item, qty, value, status, user } = req.body;
-
-        if (!item || item.trim() === '') return res.status(400).json({ success: false, message: "Item name cannot be empty." });
-        if (qty <= 0) return res.status(400).json({ success: false, message: "Quantity must be greater than zero." });
-        if (value < 0) return res.status(400).json({ success: false, message: "Value cannot be negative." });
-
         let prefix = type.includes('Purchase') ? 'PO' : 'SO';
         const docId = await getNextDocNumber(prefix, 'Supply!A:A');
         const auditLog = `Logged by ${user || 'Unknown'}`;
@@ -210,11 +224,8 @@ app.post('/api/supply', async (req, res) => {
             spreadsheetId: SPREADSHEET_ID, range: 'Finance!A:F', valueInputOption: 'USER_ENTERED',
             resource: { values: [[invId, date, financeType, financeCategory, value, financeDesc]] }
         });
-
         res.status(201).json({ success: true, docId });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Server error." });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/qc/pending', async (req, res) => {
@@ -228,9 +239,7 @@ app.get('/api/qc/pending', async (req, res) => {
             }
         });
         res.status(200).json({ success: true, data: pending });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/qc/process', async (req, res) => {
@@ -257,9 +266,7 @@ app.post('/api/qc/process', async (req, res) => {
             });
         }
         res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/production', async (req, res) => {
@@ -267,9 +274,7 @@ app.get('/api/production', async (req, res) => {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Production!A2:F' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/production', async (req, res) => {
@@ -312,9 +317,7 @@ app.post('/api/production', async (req, res) => {
             });
         }
         res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.get('/api/finance', async (req, res) => {
@@ -322,9 +325,7 @@ app.get('/api/finance', async (req, res) => {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Finance!A2:F' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/finance', async (req, res) => {
@@ -335,9 +336,7 @@ app.post('/api/finance', async (req, res) => {
             resource: { values: [[txnId, date, type, category, amount, description]] }
         });
         res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 const PORT = process.env.PORT || 3000;
