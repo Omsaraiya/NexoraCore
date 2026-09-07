@@ -28,6 +28,20 @@ window.exportTableToCSV = function (filename) {
     document.body.removeChild(downloadLink);
 };
 
+function setFormProcessing(form, processing, processingLabel = 'Processing...') {
+    const submitButton = form && form.querySelector('button[type="submit"]');
+    if (!submitButton) return;
+
+    if (processing) {
+        submitButton.dataset.defaultLabel = submitButton.textContent;
+        submitButton.textContent = processingLabel;
+        submitButton.disabled = true;
+    } else {
+        submitButton.textContent = submitButton.dataset.defaultLabel || submitButton.textContent;
+        submitButton.disabled = false;
+    }
+}
+
 // ==========================================
 // GLOBAL LOGIC & RBAC
 // ==========================================
@@ -101,31 +115,30 @@ if (window.location.pathname.includes('hr.html')) {
     if (hrForm) {
         hrForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('hrSubmitBtn');
-            btn.textContent = "Provisioning..."; btn.disabled = true;
-
-            const generatedId = 'EMP-' + Math.floor(1000 + Math.random() * 9000);
-            const generatedKey = Math.random().toString(36).slice(-6).toUpperCase();
-
-            const payload = {
-                empId: generatedId,
-                name: document.getElementById('empName').value.trim(),
-                role: document.getElementById('empRole').value,
-                passkey: generatedKey,
-                status: 'Active'
-            };
-
-            const result = await registerEmployee(payload);
-            if (result.success) {
-                hrForm.reset();
-                loadDirectory();
-                document.getElementById('newCredentialsDisplay').style.display = 'block';
-                document.getElementById('displayId').textContent = generatedId;
-                document.getElementById('displayKey').textContent = generatedKey;
-            } else {
-                alert("Failed to provision employee.");
+            setFormProcessing(hrForm, true, 'Provisioning...');
+            try {
+                const generatedId = 'EMP-' + Math.floor(1000 + Math.random() * 9000);
+                const generatedKey = Math.random().toString(36).slice(-6).toUpperCase();
+                const payload = {
+                    empId: generatedId,
+                    name: document.getElementById('empName').value.trim(),
+                    role: document.getElementById('empRole').value,
+                    passkey: generatedKey,
+                    status: 'Active'
+                };
+                const result = await registerEmployee(payload);
+                if (result.success) {
+                    hrForm.reset();
+                    loadDirectory();
+                    document.getElementById('newCredentialsDisplay').style.display = 'block';
+                    document.getElementById('displayId').textContent = generatedId;
+                    document.getElementById('displayKey').textContent = generatedKey;
+                } else {
+                    alert("Failed to provision employee.");
+                }
+            } finally {
+                setFormProcessing(hrForm, false);
             }
-            btn.textContent = "Generate Credentials"; btn.disabled = false;
         });
     }
 
@@ -276,10 +289,15 @@ if (window.location.pathname.includes('tasks.html')) {
     if (taskForm) {
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setFormProcessing(taskForm, true);
             const payload = { employee: document.getElementById('empName').value.trim(), task: document.getElementById('taskDesc').value.trim(), status: 'Pending', date: document.getElementById('dueDate').value };
-            await createNewTask(payload);
-            taskForm.reset();
-            loadManagementTable();
+            try {
+                await createNewTask(payload);
+                taskForm.reset();
+                loadManagementTable();
+            } finally {
+                setFormProcessing(taskForm, false);
+            }
         });
     }
 
@@ -288,6 +306,18 @@ if (window.location.pathname.includes('tasks.html')) {
 }
 
 if (window.location.pathname.includes('inventory.html')) {
+    const inventoryModal = document.getElementById('addInventoryModal');
+    const openInventoryModal = document.getElementById('openInventoryModal');
+    const closeInventoryModal = document.getElementById('closeInventoryModal');
+
+    if (inventoryModal && openInventoryModal && closeInventoryModal) {
+        openInventoryModal.addEventListener('click', () => inventoryModal.classList.add('active'));
+        closeInventoryModal.addEventListener('click', () => inventoryModal.classList.remove('active'));
+        inventoryModal.addEventListener('click', (event) => {
+            if (event.target === inventoryModal) inventoryModal.classList.remove('active');
+        });
+    }
+
     async function loadInventoryTable() {
         const tbody = document.getElementById('inventoryTableBody');
         if (!tbody) return;
@@ -306,6 +336,31 @@ if (window.location.pathname.includes('inventory.html')) {
         });
     }
     loadInventoryTable();
+
+    const inventoryForm = document.getElementById('inventoryForm');
+    if (inventoryForm) {
+        inventoryForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setFormProcessing(inventoryForm, true);
+            try {
+                const result = await addInventoryItem({
+                    name: document.getElementById('inventoryItemName').value.trim(),
+                    category: document.getElementById('inventoryCategory').value.trim(),
+                    stock: document.getElementById('inventoryStock').value,
+                    reorderLevel: document.getElementById('inventoryReorderLevel').value
+                });
+                if (!result.success) throw new Error(result.message || 'Unable to add inventory item.');
+                inventoryForm.reset();
+                document.getElementById('inventoryCategory').value = 'Raw Material';
+                inventoryModal.classList.remove('active');
+                loadInventoryTable();
+            } catch (error) {
+                alert(error.message);
+            } finally {
+                setFormProcessing(inventoryForm, false);
+            }
+        });
+    }
 }
 
 if (window.location.pathname.includes('finance.html')) {
@@ -349,6 +404,7 @@ if (window.location.pathname.includes('finance.html')) {
     if (financeForm) {
         financeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setFormProcessing(financeForm, true);
             const payload = {
                 txnId: 'TXN-' + Math.floor(100000 + Math.random() * 900000),
                 date: new Date().toISOString().split('T')[0],
@@ -357,9 +413,13 @@ if (window.location.pathname.includes('finance.html')) {
                 amount: document.getElementById('txnAmount').value,
                 description: document.getElementById('txnDesc').value.trim()
             };
-            await addTransaction(payload);
-            financeForm.reset();
-            loadFinanceLedger();
+            try {
+                await addTransaction(payload);
+                financeForm.reset();
+                loadFinanceLedger();
+            } finally {
+                setFormProcessing(financeForm, false);
+            }
         });
     }
 }
@@ -384,6 +444,7 @@ if (window.location.pathname.includes('supply.html')) {
     if (supplyForm) {
         supplyForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setFormProcessing(supplyForm, true);
             const payload = {
                 date: new Date().toISOString().split('T')[0],
                 type: document.getElementById('supplyType').value,
@@ -394,8 +455,12 @@ if (window.location.pathname.includes('supply.html')) {
                 status: document.getElementById('supplyStatus').value,
                 user: localStorage.getItem('nexora_session_name') || 'Unknown'
             };
-            const result = await addSupplyEvent(payload);
-            if (result.success) { supplyForm.reset(); loadSupplyLedger(); } else { alert(result.message || "Failed."); }
+            try {
+                const result = await addSupplyEvent(payload);
+                if (result.success) { supplyForm.reset(); loadSupplyLedger(); } else { alert(result.message || "Failed."); }
+            } finally {
+                setFormProcessing(supplyForm, false);
+            }
         });
     }
 }
@@ -449,6 +514,7 @@ if (window.location.pathname.includes('production.html')) {
     if (prodForm) {
         prodForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            setFormProcessing(prodForm, true);
             const payload = {
                 date: new Date().toISOString().split('T')[0],
                 product: document.getElementById('prodItem').value.trim(),
@@ -457,8 +523,12 @@ if (window.location.pathname.includes('production.html')) {
                 rmQty: parseInt(document.getElementById('rmQty').value),
                 user: localStorage.getItem('nexora_session_name') || 'Operator'
             };
-            const res = await fetch('http://localhost:3000/api/production', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (res.ok) { prodForm.reset(); loadProductionLedger(); alert("Production logged."); }
+            try {
+                const res = await fetch('http://localhost:3000/api/production', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) { prodForm.reset(); loadProductionLedger(); alert("Production logged."); }
+            } finally {
+                setFormProcessing(prodForm, false);
+            }
         });
     }
 }

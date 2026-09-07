@@ -31,6 +31,7 @@ const markTaskCompleted = async (rowIndex) => await apiCall('/api/tasks/complete
 const fetchEmployees = async () => (await apiCall('/api/employees')).data || [];
 const updateQAStatus = async (rowIndex, status) => await apiCall('/api/tasks/qa', 'PUT', { rowIndex, qaStatus: status });
 const fetchInventory = async () => (await apiCall('/api/inventory')).data || [];
+const addInventoryItem = async (inventoryData) => await apiCall('/api/inventory', 'POST', inventoryData);
 const fetchFinanceData = async () => (await apiCall('/api/finance')).data || [];
 const addTransaction = async (txnData) => await apiCall('/api/finance', 'POST', txnData);
 const registerEmployee = async (empData) => await apiCall('/api/employees', 'POST', empData);

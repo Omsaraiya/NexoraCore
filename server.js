@@ -49,9 +49,18 @@ app.post('/api/login', async (req, res) => {
             if (rows[i][0] === empId) {
                 if (rows[i][4] !== 'Active') return res.status(403).json({ success: false, message: "Account is suspended." });
 
-                // Check if passkey matches bcrypt hash OR legacy plaintext
-                const validPassword = await bcrypt.compare(passkey, rows[i][3]).catch(() => false);
-                const isLegacy = passkey === rows[i][3];
+                // Avoid passing legacy plaintext values to bcrypt.compare().
+                const storedPasskey = String(rows[i][3] || '');
+                const isLegacy = passkey === storedPasskey;
+                const isBcryptHash = /^\$2[aby]?\$\d{2}\$/.test(storedPasskey);
+                let validPassword = false;
+                if (!isLegacy && isBcryptHash) {
+                    try {
+                        validPassword = await bcrypt.compare(String(passkey || ''), storedPasskey);
+                    } catch (compareError) {
+                        validPassword = false;
+                    }
+                }
 
                 if (validPassword || isLegacy) {
                     const token = jwt.sign({ empId: rows[i][0], role: rows[i][2], name: rows[i][1] }, process.env.JWT_SECRET, { expiresIn: '24h' });
@@ -192,6 +201,25 @@ app.get('/api/inventory', async (req, res) => {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A2:E' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+app.post('/api/inventory', async (req, res) => {
+    try {
+        const { name, category, stock, reorderLevel } = req.body;
+        const quantity = Number(stock);
+        const minimumStock = Number(reorderLevel);
+
+        if (!name || !category || !Number.isFinite(quantity) || !Number.isFinite(minimumStock) || quantity < 0 || minimumStock < 0) {
+            return res.status(400).json({ success: false, message: 'Provide valid item details and non-negative quantities.' });
+        }
+
+        const itemId = await getNextDocNumber('RM', 'Inventory!A:A');
+        await gsapi.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E', valueInputOption: 'USER_ENTERED',
+            resource: { values: [[itemId, name.trim(), category.trim(), quantity, minimumStock]] }
+        });
+        res.status(201).json({ success: true, itemId });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
