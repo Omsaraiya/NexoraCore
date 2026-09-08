@@ -34,10 +34,17 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                    📑 Financial Command Center
-                </h2>
-                <div class="user-info">Welcome, User</div>
+                <h2>Command Center</h2>
+                <div class="topbar-tools">
+                    <input class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
+                    <select class="plant-switcher" aria-label="Plant switcher">
+                        <option>Unit I</option>
+                        <option>Unit II</option>
+                        <option>Unit III</option>
+                    </select>
+                    <span class="fy-chip">FY 2026-27</span>
+                    <div class="profile-chip user-info">Pradeep Kumar - Plant Manager</div>
+                </div>
             </header>
 
             <main class="content-area">
@@ -134,16 +141,16 @@
                     </div>
 
                     <!-- SCROLLABLE CONTAINER RESTORED -->
-                    <div class="table-container">
-                        <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <div class="erp-scroll">
+                        <table class="data-table erp-table" style="width: 100%; text-align: left; border-collapse: collapse;">
                             <thead>
                                 <tr
                                     style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase;">
-                                    <th style="padding: 12px 20px;">Date</th>
-                                    <th style="padding: 12px 20px;">TXN ID</th>
-                                    <th style="padding: 12px 20px;">Type</th>
-                                    <th style="padding: 12px 20px;">Category</th>
-                                    <th style="padding: 12px 20px;">Amount</th>
+                                    <th class="label-caps" style="padding: 12px 20px;">Date</th>
+                                    <th class="label-caps" style="padding: 12px 20px;">TXN ID</th>
+                                    <th class="label-caps" style="padding: 12px 20px;">Type</th>
+                                    <th class="label-caps" style="padding: 12px 20px;">Category</th>
+                                    <th class="label-caps num" style="padding: 12px 20px;">Amount</th>
                                 </tr>
                             </thead>
                             <tbody id="financeTableBody">

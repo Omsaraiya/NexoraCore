@@ -33,8 +33,17 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h2>Quality Control & Inspections (IQC)</h2>
-                <div class="user-info">Welcome, User</div>
+                <h2>Command Center</h2>
+                <div class="topbar-tools">
+                    <input class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
+                    <select class="plant-switcher" aria-label="Plant switcher">
+                        <option>Unit I</option>
+                        <option>Unit II</option>
+                        <option>Unit III</option>
+                    </select>
+                    <span class="fy-chip">FY 2026-27</span>
+                    <div class="profile-chip user-info">Pradeep Kumar - Plant Manager</div>
+                </div>
             </header>
             <main class="content-area">
                 <div class="panel-card p-20">
@@ -42,16 +51,16 @@
                     <p class="text-muted" style="margin-bottom: 20px;">Procure-to-Pay raw materials awaiting dimensional
                         and tolerance verification.</p>
 
-                    <div class="table-container">
-                        <table class="data-table">
+                    <div class="erp-scroll">
+                        <table class="data-table erp-table">
                             <thead>
                                 <tr>
-                                    <th>PO REF</th>
-                                    <th>DATE</th>
-                                    <th>MATERIAL</th>
-                                    <th>QTY</th>
-                                    <th>STATUS</th>
-                                    <th>DISPOSITION</th>
+                                    <th class="label-caps">PO REF</th>
+                                    <th class="label-caps">DATE</th>
+                                    <th class="label-caps">MATERIAL</th>
+                                    <th class="label-caps num">QTY</th>
+                                    <th class="label-caps">STATUS</th>
+                                    <th class="label-caps">DISPOSITION</th>
                                 </tr>
                             </thead>
                             <tbody id="qcTableBody">

@@ -33,8 +33,17 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h2>Warehouse & Inventory</h2>
-                <div class="user-info">Welcome, User</div>
+                <h2>Command Center</h2>
+                <div class="topbar-tools">
+                    <input class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
+                    <select class="plant-switcher" aria-label="Plant switcher">
+                        <option>Unit I</option>
+                        <option>Unit II</option>
+                        <option>Unit III</option>
+                    </select>
+                    <span class="fy-chip">FY 2026-27</span>
+                    <div class="profile-chip user-info">Pradeep Kumar - Plant Manager</div>
+                </div>
             </header>
 
             <main class="content-area">
@@ -55,16 +64,16 @@
                         </div>
                     </div>
 
-                    <div class="table-scroll">
-                        <table class="data-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <div class="erp-scroll">
+                        <table class="data-table erp-table" style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead>
                             <tr
                                 style="border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 12px; text-transform: uppercase;">
-                                <th style="padding: 12px 8px;">Item ID</th>
-                                <th style="padding: 12px 8px;">Item Name</th>
-                                <th style="padding: 12px 8px;">Category</th>
-                                <th style="padding: 12px 8px;">Current Stock</th>
-                                <th style="padding: 12px 8px;">Status</th>
+                                <th class="label-caps" style="padding: 12px 8px;">Item ID</th>
+                                <th class="label-caps" style="padding: 12px 8px;">Item Name</th>
+                                <th class="label-caps" style="padding: 12px 8px;">Category</th>
+                                <th class="label-caps num" style="padding: 12px 8px;">Current Stock</th>
+                                <th class="label-caps" style="padding: 12px 8px;">Status</th>
                             </tr>
                         </thead>
                         <tbody id="inventoryTableBody">
