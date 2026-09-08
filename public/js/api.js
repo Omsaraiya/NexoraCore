@@ -14,14 +14,21 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         if (body) options.body = JSON.stringify(body);
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-        if (response.status === 401 || response.status === 403) {
-            console.warn("Unauthorized access. Token missing or expired.");
-            window.location.href = 'index.html'; // Force logout on token expiry
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                console.warn("Unauthorized access. Token missing or expired.");
+                localStorage.removeItem('nexora_token');
+                localStorage.removeItem('nexora_session_role');
+                localStorage.removeItem('nexora_session_name');
+                window.location.href = 'index.html';
+            }
+            throw new Error(result.message || `Request failed (${response.status}).`);
         }
-        return await response.json();
+        return result;
     } catch (error) {
         console.error(`API Error (${endpoint}):`, error);
-        return { success: false, data: [] };
+        throw error;
     }
 }
 

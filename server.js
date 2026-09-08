@@ -49,8 +49,9 @@ app.post('/api/login', async (req, res) => {
             if (rows[i][0] === empId) {
                 if (rows[i][4] !== 'Active') return res.status(403).json({ success: false, message: "Account is suspended." });
 
-                // Avoid passing legacy plaintext values to bcrypt.compare().
-                const storedPasskey = String(rows[i][3] || '');
+                // Avoid passing undefined values to bcrypt.compare().
+                const storedHash = rows[i][3] || '';
+                const storedPasskey = String(storedHash);
                 const isLegacy = passkey === storedPasskey;
                 const isBcryptHash = /^\$2[aby]?\$\d{2}\$/.test(storedPasskey);
                 let validPassword = false;
@@ -63,13 +64,18 @@ app.post('/api/login', async (req, res) => {
                 }
 
                 if (validPassword || isLegacy) {
-                    const token = jwt.sign({ empId: rows[i][0], role: rows[i][2], name: rows[i][1] }, process.env.JWT_SECRET, { expiresIn: '24h' });
+                    const token = jwt.sign(
+                        { empId: rows[i][0], role: rows[i][2], name: rows[i][1] },
+                        process.env.JWT_SECRET,
+                        { expiresIn: '24h' }
+                    );
                     return res.json({ success: true, token, role: rows[i][2], name: rows[i][1] });
                 }
             }
         }
         return res.status(401).json({ success: false, message: "Invalid ID or Passkey." });
     } catch (error) {
+        console.error("[Login 500 Error]:", error);
         res.status(500).json({ success: false, message: "Server error during authentication." });
     }
 });
@@ -101,8 +107,14 @@ app.get('/api/dashboard', async (req, res) => {
     try {
         const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Sheet1!A2:F' };
         let data = await gsapi.spreadsheets.values.get(opt);
-        res.status(200).json({ success: true, data: data.data.values || [] });
-    } catch (error) { res.status(500).json({ success: false }); }
+        res.status(200).json({
+            success: true,
+            data: data && data.data && data.data.values || []
+        });
+    } catch (error) {
+        console.error("[Dashboard 500 Error]:", error);
+        res.status(500).json({ success: false });
+    }
 });
 
 app.post('/api/employees', async (req, res) => {
@@ -308,27 +320,40 @@ app.get('/api/production', async (req, res) => {
 app.post('/api/production', async (req, res) => {
     try {
         const { date, product, prodQty, rmItem, rmQty, user } = req.body;
+        const requestedProdQty = Number(prodQty);
+        const requestedRmQty = Number(rmQty);
+        if (!product || !rmItem || !Number.isFinite(requestedProdQty) || requestedProdQty < 0 || !Number.isFinite(requestedRmQty) || requestedRmQty < 0) {
+            return res.status(400).json({ success: false, message: "Provide valid non-negative production quantities." });
+        }
+
+        const invResp = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E' });
+        const invRows = invResp.data.values || [];
+        const rawMaterialRow = invRows.find((row, index) => index > 0 && row[1] === rmItem);
+        const currentRmQty = rawMaterialRow ? Number(rawMaterialRow[3]) : NaN;
+        const newRmQty = currentRmQty - requestedRmQty;
+
+        if (!Number.isFinite(currentRmQty) || newRmQty < 0) {
+            return res.status(400).json({ success: false, message: "Insufficient raw material stock." });
+        }
+
         const prodId = await getNextDocNumber('PRD', 'Production!A:A');
 
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Production!A:F', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[prodId, date, product, prodQty, user, 'Completed']] }
+            resource: { values: [[prodId, date, product, requestedProdQty, user, 'Completed']] }
         });
 
-        const invResp = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E' });
-        const invRows = invResp.data.values || [];
         let fgUpdated = false;
 
         for (let i = 1; i < invRows.length; i++) {
             if (invRows[i][1] === rmItem) {
-                const newRmQty = parseInt(invRows[i][3]) - parseInt(rmQty);
                 await gsapi.spreadsheets.values.update({
                     spreadsheetId: SPREADSHEET_ID, range: `Inventory!D${i + 1}`, valueInputOption: 'USER_ENTERED',
                     resource: { values: [[newRmQty]] }
                 });
             }
             if (invRows[i][1] === product) {
-                const newFgQty = parseInt(invRows[i][3] || 0) + parseInt(prodQty);
+                const newFgQty = Number(invRows[i][3] || 0) + requestedProdQty;
                 await gsapi.spreadsheets.values.update({
                     spreadsheetId: SPREADSHEET_ID, range: `Inventory!D${i + 1}`, valueInputOption: 'USER_ENTERED',
                     resource: { values: [[newFgQty]] }
@@ -341,7 +366,7 @@ app.post('/api/production', async (req, res) => {
             const invId = 'FG-' + Math.floor(1000 + Math.random() * 9000);
             await gsapi.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E', valueInputOption: 'USER_ENTERED',
-                resource: { values: [[invId, product, 'Finished Good', prodQty, 100]] }
+                resource: { values: [[invId, product, 'Finished Good', requestedProdQty, 100]] }
             });
         }
         res.status(201).json({ success: true });

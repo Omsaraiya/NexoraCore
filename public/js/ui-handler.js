@@ -42,6 +42,8 @@ function setFormProcessing(form, processing, processingLabel = 'Processing...') 
     }
 }
 
+const $ = id => document.getElementById(id);
+
 // ==========================================
 // GLOBAL LOGIC & RBAC
 // ==========================================
@@ -134,8 +136,10 @@ if (window.location.pathname.includes('hr.html')) {
                     document.getElementById('displayId').textContent = generatedId;
                     document.getElementById('displayKey').textContent = generatedKey;
                 } else {
-                    alert("Failed to provision employee.");
+                    throw new Error(result.message || "Failed to provision employee.");
                 }
+            } catch (error) {
+                alert(error.message || "Unable to provision employee.");
             } finally {
                 setFormProcessing(hrForm, false);
             }
@@ -146,8 +150,7 @@ if (window.location.pathname.includes('hr.html')) {
     if (clockInBtn) {
         clockInBtn.addEventListener('click', async () => {
             const empId = document.getElementById('attEmpId').value.trim();
-            const res = await fetch('http://localhost:3000/api/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ empId }) });
-            const data = await res.json();
+            const data = await apiCall('/api/attendance', 'POST', { empId });
             alert(data.message || "Shift logged.");
         });
     }
@@ -157,8 +160,7 @@ if (window.location.pathname.includes('hr.html')) {
         runPayrollBtn.addEventListener('click', async () => {
             const empId = document.getElementById('payrollEmpId').value.trim();
             const user = localStorage.getItem('nexora_session_name') || 'Unknown';
-            const res = await fetch('http://localhost:3000/api/payroll', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ empId, user }) });
-            const data = await res.json();
+            const data = await apiCall('/api/payroll', 'POST', { empId, user });
             alert(data.message || "Payroll processed.");
         });
     }
@@ -295,6 +297,8 @@ if (window.location.pathname.includes('tasks.html')) {
                 await createNewTask(payload);
                 taskForm.reset();
                 loadManagementTable();
+            } catch (error) {
+                alert(error.message || "Unable to create task.");
             } finally {
                 setFormProcessing(taskForm, false);
             }
@@ -417,6 +421,8 @@ if (window.location.pathname.includes('finance.html')) {
                 await addTransaction(payload);
                 financeForm.reset();
                 loadFinanceLedger();
+            } catch (error) {
+                alert(error.message || "Unable to save transaction.");
             } finally {
                 setFormProcessing(financeForm, false);
             }
@@ -457,7 +463,11 @@ if (window.location.pathname.includes('supply.html')) {
             };
             try {
                 const result = await addSupplyEvent(payload);
-                if (result.success) { supplyForm.reset(); loadSupplyLedger(); } else { alert(result.message || "Failed."); }
+                if (!result.success) throw new Error(result.message || "Unable to save supply event.");
+                supplyForm.reset();
+                loadSupplyLedger();
+            } catch (error) {
+                alert(error.message || "Unable to save supply event.");
             } finally {
                 setFormProcessing(supplyForm, false);
             }
@@ -469,8 +479,7 @@ if (window.location.pathname.includes('qc.html')) {
     async function loadPendingQC() {
         const tbody = document.getElementById('qcTableBody');
         if (!tbody) return;
-        const res = await fetch('http://localhost:3000/api/qc/pending');
-        const result = await res.json();
+        const result = await apiCall('/api/qc/pending');
         tbody.innerHTML = '';
         if (!result.data || result.data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No pending materials.</td></tr>`;
@@ -489,8 +498,7 @@ if (window.location.pathname.includes('qc.html')) {
         const remarks = prompt(`Enter inspection remarks for ${item} (${status}):`, defaultRemark);
         if (remarks === null) return;
         const payload = { rowIndex, poRef, item, qty, status, inspector: localStorage.getItem('nexora_session_name') || 'Unknown', remarks };
-        const res = await fetch('http://localhost:3000/api/qc/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if ((await res.json()).success) loadPendingQC();
+        if ((await apiCall('/api/qc/process', 'POST', payload)).success) loadPendingQC();
     };
     loadPendingQC();
 }
@@ -499,8 +507,7 @@ if (window.location.pathname.includes('production.html')) {
     async function loadProductionLedger() {
         const tbody = document.getElementById('prodTableBody');
         if (!tbody) return;
-        const res = await fetch('http://localhost:3000/api/production');
-        const result = await res.json();
+        const result = await apiCall('/api/production');
         tbody.innerHTML = '';
         (result.data || []).slice().reverse().forEach((row) => {
             const tr = document.createElement('tr');
@@ -524,8 +531,16 @@ if (window.location.pathname.includes('production.html')) {
                 user: localStorage.getItem('nexora_session_name') || 'Operator'
             };
             try {
-                const res = await fetch('http://localhost:3000/api/production', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (res.ok) { prodForm.reset(); loadProductionLedger(); alert("Production logged."); }
+                const result = await apiCall('/api/production', 'POST', payload);
+                if (result.success) {
+                    prodForm.reset();
+                    loadProductionLedger();
+                    alert("Production logged.");
+                } else {
+                    throw new Error(result.message || "Insufficient raw material stock.");
+                }
+            } catch (error) {
+                alert("Error: " + (error.message || "Unable to log production."));
             } finally {
                 setFormProcessing(prodForm, false);
             }
