@@ -40,7 +40,58 @@
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
-.num { font-variant-numeric: tabular-nums; font-family: monospace; }
+.num { font-variant-numeric: tabular-nums; font-family: inherit; font-weight: 600; }
 .label-caps { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0 0 24px;
+}
+
+.kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 130px;
+    box-shadow: var(--shadow-sm);
+}
+
+.label-caps {
+    font-size: 11px;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.num {
+    font-variant-numeric: tabular-nums;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 2rem;
+    line-height: 1.15;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+}
+
+.success-text {
+    color: var(--success);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.warning-text {
+    color: var(--warning-text);
+    font-size: 12px;
+    font-weight: 700;
+}

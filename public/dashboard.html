@@ -8,34 +8,29 @@
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/layout.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
     <div class="dashboard-layout">
         <aside class="sidebar">
             <div class="brand">
-                <h2>NexoraCore</h2>
+                <div class="brand-mark">SK</div>
+                <div class="brand-meta">
+                    <span class="brand-title">Shree Krishna Controls</span>
+                    <small>Enterprise ERP v3.2</small>
+                </div>
             </div>
-            <nav class="side-nav">
-                <!-- Resolved duplicate class attribute here -->
-                <a href="dashboard.html" class="admin-only active">Overview</a>
-                <a href="hr.html" class="admin-only">HR & Access</a>
-                <a href="tasks.html">Task Manager</a>
-                <a href="inventory.html">Inventory Manager</a>
-                <a href="supply.html">Supply Chain</a>
-                <a href="qc.html" class="admin-only">Quality & Lab</a>
-                <a href="finance.html" class="admin-only">Financial Core</a>
-                <a href="production.html">Production Logs</a>
-                <a href="settings.html" class="admin-only">System Settings</a>
-            </nav>
+
+            <nav id="dynamic-sidebar" class="side-nav" aria-label="Main navigation"></nav>
+
             <div class="logout-section">
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
             </div>
         </aside>
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h2>Command Center</h2>
                 <div class="topbar-tools">
                     <input class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
                     <select class="plant-switcher" aria-label="Plant switcher">
@@ -49,29 +44,67 @@
             </header>
 
             <main class="content-area">
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
-                    <div class="panel-card" style="padding: 20px; border-left: 4px solid #3b82f6;">
-                        <h4 style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Active Tasks
-                        </h4>
-                        <h2 id="godActiveTasks" style="margin: 10px 0 0 0; color: #0f172a; font-size: 26px;">-</h2>
+                <section class="page-header">
+                    <div class="page-header-copy">
+                        <div class="breadcrumb">OVERVIEW / DASHBOARD</div>
+                        <h1>Executive Dashboard</h1>
                     </div>
-                    <div class="panel-card" style="padding: 20px; border-left: 4px solid #dc2626;">
-                        <h4 style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Overdue
-                            Alerts</h4>
-                        <h2 id="godDelayedTasks" style="margin: 10px 0 0 0; color: #dc2626; font-size: 26px;">-</h2>
+
+                    <div class="page-header-actions">
+                        <button class="btn btn-secondary">Download MIS</button>
+                        <button class="btn btn-primary">New Transaction</button>
                     </div>
-                    <div class="panel-card" style="padding: 20px; border-left: 4px solid #ea580c;">
-                        <h4 style="margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase;">Low Stock
-                            Alerts</h4>
-                        <h2 id="godInventoryAlerts" style="margin: 10px 0 0 0; color: #ea580c; font-size: 26px;">-</h2>
-                    </div>
-                    <div class="panel-card"
-                        style="padding: 20px; border-left: 4px solid #16a34a; background-color: #072a4f; color: white;">
-                        <h4 style="margin: 0; color: #94a3b8; font-size: 12px; text-transform: uppercase;">True Net
-                            Profit</h4>
-                        <h2 id="godNetProfit" style="margin: 10px 0 0 0; color: #86efac; font-size: 26px;">₹0</h2>
-                    </div>
-                </div>
+                </section>
+
+                <section class="kpi-grid" aria-label="Executive KPI overview">
+                    <article class="kpi-card">
+                        <div class="label-caps">Today's Output</div>
+                        <div class="num">14,820 pcs</div>
+                        <span class="success-text">+4.2% vs plan</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">On-Time Dispatch</div>
+                        <div class="num">96.4%</div>
+                        <span class="success-text">+1.8% vs last shift</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">Pending Orders</div>
+                        <div class="num">328</div>
+                        <span class="warning-text">12 urgent</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">Net Profit</div>
+                        <div class="num">₹18.6L</div>
+                        <span class="success-text">+7.1% vs target</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">Inventory Turns</div>
+                        <div class="num">6.2x</div>
+                        <span class="success-text">+0.6 vs benchmark</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">Scrap Loss</div>
+                        <div class="num">1.9%</div>
+                        <span class="success-text">-0.4% improvement</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">Open Tickets</div>
+                        <div class="num">27</div>
+                        <span class="warning-text">5 require escalation</span>
+                    </article>
+
+                    <article class="kpi-card">
+                        <div class="label-caps">Employee Utilization</div>
+                        <div class="num">88.6%</div>
+                        <span class="success-text">+3.1% this week</span>
+                    </article>
+                </section>
 
                 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 20px;">
                     <div class="panel-card" style="padding: 20px;">
@@ -110,6 +143,10 @@
 
     <script src="js/api.js"></script>
     <script src="js/ui-handler.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', initSidebar);
+    </script>
 </body>
 
 </html>

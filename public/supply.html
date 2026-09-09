@@ -7,6 +7,7 @@
     <title>NexoraCore | Supply Chain</title>
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/layout.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
@@ -15,17 +16,7 @@
             <div class="brand">
                 <h2>NexoraCore</h2>
             </div>
-            <nav class="side-nav">
-                <a href="dashboard.html" class="admin-only">Overview</a>
-                <a href="hr.html" class="admin-only">HR & Access</a>
-                <a href="tasks.html">Task Manager</a>
-                <a href="inventory.html">Inventory Manager</a>
-                <a href="supply.html" class="active">Supply Chain</a>
-                <a href="qc.html" class="admin-only">Quality & Lab</a>
-                <a href="finance.html" class="admin-only">Financial Core</a>
-                <a href="production.html">Production Logs</a>
-                <a href="settings.html" class="admin-only">System Settings</a>
-            </nav>
+            <nav id="dynamic-sidebar" class="side-nav"></nav>
             <div class="logout-section">
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
             </div>
@@ -132,6 +123,10 @@
     </div>
     <script src="js/api.js"></script>
     <script src="js/ui-handler.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', initSidebar);
+    </script>
 </body>
 
 </html>
