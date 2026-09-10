@@ -50,8 +50,8 @@ body {
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-    margin: 0 0 24px;
+    gap: 14px;
+    margin: 0 0 20px;
 }
 
 .kpi-card {

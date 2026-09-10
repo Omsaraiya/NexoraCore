@@ -7,6 +7,7 @@
     <title>NexoraCore | Financial Core</title>
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/print.css" media="print">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
@@ -27,8 +28,8 @@
             <header class="topbar">
                 <h2>Command Center</h2>
                 <div class="topbar-tools">
-                    <input class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
-                    <select class="plant-switcher" aria-label="Plant switcher">
+                    <input id="global-search" name="global-search" class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
+                    <select id="plant-switcher" name="plant-switcher" class="plant-switcher" aria-label="Plant switcher">
                         <option>Unit I</option>
                         <option>Unit II</option>
                         <option>Unit III</option>
@@ -83,6 +84,10 @@
                             <div id="pyNetProfit" style="font-size: 22px; font-weight: bold; color: #86efac;">₹0</div>
                         </div>
                     </div>
+                </div>
+
+                <div class="page-header-actions" style="margin-bottom: 20px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="window.print()">Export PDF Invoice</button>
                 </div>
 
                 <div class="panel-card" style="margin-bottom: 20px; padding: 20px;">

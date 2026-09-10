@@ -1,0 +1,83 @@
+@media print {
+    :root {
+        --print-bg: #ffffff;
+        --print-text: #0f172a;
+        --print-muted: #475569;
+        --print-border: #cbd5e1;
+    }
+
+    @page {
+        margin: 12mm;
+    }
+
+    html,
+    body,
+    .main-wrapper,
+    .content-area {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: var(--print-bg) !important;
+        color: var(--print-text) !important;
+    }
+
+    body {
+        background: var(--print-bg) !important;
+        color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .sidebar,
+    .topbar,
+    .btn,
+    button,
+    .page-header-actions {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    .main-wrapper {
+        overflow: visible !important;
+        height: auto !important;
+        background: var(--print-bg) !important;
+    }
+
+    .content-area {
+        float: none !important;
+        background: var(--print-bg) !important;
+        color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .panel-card,
+    .data-table,
+    .data-table th,
+    .data-table td,
+    .erp-scroll {
+        background: #ffffff !important;
+        color: var(--print-text) !important;
+        border-color: var(--print-border) !important;
+        color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .data-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .data-table th,
+    .data-table td {
+        border: 1px solid var(--print-border) !important;
+        padding: 8px 10px !important;
+    }
+
+    .panel-card {
+        box-shadow: none !important;
+        border: 1px solid var(--print-border) !important;
+    }
+}
