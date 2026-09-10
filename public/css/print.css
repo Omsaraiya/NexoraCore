@@ -1,13 +1,25 @@
 @media print {
+    .no-print,
+    .sidebar,
+    .topbar,
+    .page-header-actions {
+        display: none !important;
+    }
+
+    @page {
+        margin: 15mm;
+        size: A4 portrait;
+    }
+
+    body {
+        background: #ffffff !important;
+    }
+
     :root {
         --print-bg: #ffffff;
         --print-text: #0f172a;
         --print-muted: #475569;
         --print-border: #cbd5e1;
-    }
-
-    @page {
-        margin: 12mm;
     }
 
     html,
@@ -22,34 +34,18 @@
         color: var(--print-text) !important;
     }
 
-    body {
-        background: var(--print-bg) !important;
-        color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    .sidebar,
-    .topbar,
-    .btn,
-    button,
-    .page-header-actions {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    .main-wrapper {
-        overflow: visible !important;
-        height: auto !important;
-        background: var(--print-bg) !important;
-    }
-
     .content-area {
         float: none !important;
         background: var(--print-bg) !important;
         color-adjust: exact;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    .main-wrapper {
+        overflow: visible !important;
+        height: auto !important;
+        background: var(--print-bg) !important;
     }
 
     .panel-card,
