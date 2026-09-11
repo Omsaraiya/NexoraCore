@@ -24,14 +24,24 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <div style="display: flex; align-items: center;">
-                    <button class="mobile-menu-btn" id="mobileMenuToggle">☰</button>
-                    <h2 style="margin: 0; margin-left: 10px;">Assign & Manage Tasks</h2>
-                </div>
-                <div class="user-info">Welcome, User</div>
-            </header>
+    <h2 class="topbar-brand">Command Center</h2>
+    <div class="topbar-tools">
+        <input id="global-search" name="global-search" class="topbar-search" type="search" placeholder="Search ERP records...">
+        <select id="plant-switcher" name="plant-switcher" class="plant-switcher">
+            <option>Unit I</option><option>Unit II</option><option>Unit III</option>
+        </select>
+        <span class="fy-chip">FY 2026-27</span>
+        <div class="profile-chip user-info">Welcome, Rahul Sharma</div>
+    </div>
+</header>
 
             <main class="content-area">
+                <section class="page-header">
+                    <div class="page-header-copy">
+                        <div class="breadcrumb">OVERVIEW / TASK MANAGER</div>
+                        <h1>Assign & Manage Tasks</h1>
+                    </div>
+                </section>
                 <div class="panel-card p-20" style="margin-bottom: 25px;">
                     <h3 class="mt-0">Create Workflow Event</h3>
                     <form id="taskForm">

@@ -26,18 +26,16 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <h2>Command Center</h2>
-                <div class="topbar-tools">
-                    <input id="global-search" name="global-search" class="topbar-search" type="search" placeholder="Search ERP records..." aria-label="Global search">
-                    <select id="plant-switcher" name="plant-switcher" class="plant-switcher" aria-label="Plant switcher">
-                        <option>Unit I</option>
-                        <option>Unit II</option>
-                        <option>Unit III</option>
-                    </select>
-                    <span class="fy-chip">FY 2026-27</span>
-                    <div class="profile-chip user-info">Pradeep Kumar - Plant Manager</div>
-                </div>
-            </header>
+    <h2 class="topbar-brand">Command Center</h2>
+    <div class="topbar-tools">
+        <input id="global-search" name="global-search" class="topbar-search" type="search" placeholder="Search ERP records...">
+        <select id="plant-switcher" name="plant-switcher" class="plant-switcher">
+            <option>Unit I</option><option>Unit II</option><option>Unit III</option>
+        </select>
+        <span class="fy-chip">FY 2026-27</span>
+        <div class="profile-chip user-info">Welcome, Rahul Sharma</div>
+    </div>
+</header>
 
             <main class="content-area">
                 <section class="page-header">
@@ -142,8 +140,7 @@
                             style="width: auto; padding: 6px 12px; font-size: 11px;">📥 Export CSV</button>
                     </div>
 
-                    <!-- SCROLLABLE CONTAINER RESTORED -->
-                    <div class="erp-scroll">
+                    <div class="table-container" style="width: 100%; max-width: 100%; overflow-x: auto; display: block;">
                         <table class="data-table erp-table" style="width: 100%; text-align: left; border-collapse: collapse;">
                             <thead>
                                 <tr

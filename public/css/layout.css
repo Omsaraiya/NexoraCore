@@ -3,8 +3,9 @@
    ========================================= */
 .dashboard-layout {
     display: flex;
+    width: 100vw;
     height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Locks the app to the screen */
 }
 
 .sidebar {
@@ -175,45 +176,77 @@
 
 /* Main Working Area */
 .main-wrapper {
-    flex-grow: 1;
+    flex: 1;
+    min-width: 0; /* CRITICAL: Stops flex items from blowing out */
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    overflow-y: auto;
-    background: var(--bg-color);
+    overflow-y: auto; /* Allows vertical scrolling */
+    overflow-x: hidden;
+    background: #f8fafc;
 }
 
 .topbar {
     position: sticky;
     top: 0;
     z-index: 1000;
+    width: 100%;
     background: #ffffff;
-    height: 72px;
+    height: 64px;
     padding: 0 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    box-shadow: none;
+}
+.topbar-brand {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+}
+.topbar-tools {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
-.topbar-title h2 {
-    margin: 0;
-    font-size: 20px;
+.topbar-search {
+    width: min(320px, 30vw);
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.plant-switcher,
+.fy-chip,
+.profile-chip {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #ffffff;
     color: var(--text-main);
 }
 
-.topbar-tools { display: flex; align-items: center; gap: 12px; }
-.topbar-search { width: min(320px, 30vw); padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff; }
-.plant-switcher, .fy-chip, .profile-chip { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; background: #ffffff; color: var(--text-main); }
-.fy-chip { border-color: #c7d2fe; color: var(--primary); background: #eef2ff; font-weight: 700; }
-.profile-chip { font-size: 12px; font-weight: 600; }
+.fy-chip {
+    border-color: #c7d2fe;
+    color: var(--primary);
+    background: #eef2ff;
+    font-weight: 700;
+}
+
+.profile-chip {
+    font-size: 12px;
+    font-weight: 600;
+}
 
 .content-area {
-    padding: 20px 20px 30px;
-    max-width: 1280px;
+    padding: 24px 30px 30px;
+    max-width: 100%;
     margin: 0 auto;
     width: 100%;
+    overflow-x: hidden; /* Prevents padded elements from stretching */
 }
 
 .page-header {
@@ -450,8 +483,14 @@
     box-shadow: none;
 }
 
-button:not(:disabled):hover { filter: brightness(1.06); }
-button:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.25); outline-offset: 2px; }
+button:not(:disabled):hover {
+    filter: brightness(1.06);
+}
+
+button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.25);
+    outline-offset: 2px;
+}
 
 /* --- Enterprise Modal (Popup) Utilities --- */
 .modal-overlay {
@@ -617,7 +656,7 @@ button:disabled {
         gap: 14px;
     }
 
-    .panel-header > div:last-child {
+    .panel-header>div:last-child {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
@@ -638,6 +677,20 @@ button:disabled {
     }
 }
 
-.erp-scroll { overflow-x: auto; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #94a3b8 transparent; }
-.erp-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-.erp-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; }
+.erp-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 transparent;
+}
+
+.erp-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.erp-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 8px;
+}
