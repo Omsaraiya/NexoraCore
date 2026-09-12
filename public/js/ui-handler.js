@@ -42,6 +42,14 @@ function setFormProcessing(form, processing, processingLabel = 'Processing...') 
     }
 }
 
+function showErrorToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-error';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
 const $ = id => document.getElementById(id);
 
 // ==========================================
@@ -371,36 +379,47 @@ if (window.location.pathname.includes('finance.html')) {
     async function loadFinanceLedger() {
         const tbody = document.getElementById('financeTableBody');
         if (!tbody) return;
-        const data = await fetchFinanceData();
-        tbody.innerHTML = '';
-        let totalInc = 0, totalExp = 0;
 
-        (data || []).slice().reverse().forEach((row) => {
-            const amt = parseFloat(row[4]) || 0;
-            if (row[2] === 'Income') totalInc += amt;
-            if (row[2] === 'Expense') totalExp += amt;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td style="color: #64748b;">${row[1]}</td><td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td><span class="${row[2] === 'Income' ? 'badge-success' : 'badge-warning'}">${row[2].toUpperCase()}</span></td><td>${row[3]}</td><td style="font-weight: bold; color: ${row[2] === 'Income' ? '#16a34a' : '#dc2626'};">₹${amt.toLocaleString('en-IN')}</td>`;
-            tbody.appendChild(tr);
-        });
-
-        document.getElementById('totalIncome').textContent = `₹${totalInc.toLocaleString('en-IN')}`;
-        document.getElementById('totalExpense').textContent = `₹${totalExp.toLocaleString('en-IN')}`;
-        const netElem = document.getElementById('netBalance');
-        netElem.textContent = `₹${(totalInc - totalExp).toLocaleString('en-IN')}`;
-        netElem.style.color = (totalInc - totalExp) >= 0 ? '#16a34a' : '#dc2626';
-
-        // --- PING PYTHON ENGINE FOR ADVANCED ANALYTICS ---
         try {
-            if (typeof calculateTaxWithPython === "function") {
-                const pyResult = await calculateTaxWithPython(totalInc, totalExp);
-                if (pyResult && pyResult.success) {
-                    document.getElementById('pyGrossProfit').textContent = `₹${pyResult.gross_profit.toLocaleString('en-IN')}`;
-                    document.getElementById('pyTax').textContent = `₹${pyResult.estimated_tax.toLocaleString('en-IN')}`;
-                    document.getElementById('pyNetProfit').textContent = `₹${pyResult.net_profit.toLocaleString('en-IN')}`;
-                }
+            const data = await fetchFinanceData();
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<div class="empty-state">No records found for this period.</div>';
+                return;
             }
-        } catch (e) { console.warn("Python engine offline."); }
+
+            let totalInc = 0, totalExp = 0;
+
+            data.slice().reverse().forEach((row) => {
+                const amt = parseFloat(row[4]) || 0;
+                if (row[2] === 'Income') totalInc += amt;
+                if (row[2] === 'Expense') totalExp += amt;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="color: #64748b;">${row[1]}</td><td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td><span class="${row[2] === 'Income' ? 'badge-success' : 'badge-warning'}">${row[2].toUpperCase()}</span></td><td>${row[3]}</td><td style="font-weight: bold; color: ${row[2] === 'Income' ? '#16a34a' : '#dc2626'};">₹${amt.toLocaleString('en-IN')}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalIncome').textContent = `₹${totalInc.toLocaleString('en-IN')}`;
+            document.getElementById('totalExpense').textContent = `₹${totalExp.toLocaleString('en-IN')}`;
+            const netElem = document.getElementById('netBalance');
+            netElem.textContent = `₹${(totalInc - totalExp).toLocaleString('en-IN')}`;
+            netElem.style.color = (totalInc - totalExp) >= 0 ? '#16a34a' : '#dc2626';
+
+            try {
+                if (typeof calculateTaxWithPython === "function") {
+                    const pyResult = await calculateTaxWithPython(totalInc, totalExp);
+                    if (pyResult && pyResult.success) {
+                        document.getElementById('pyGrossProfit').textContent = `₹${pyResult.gross_profit.toLocaleString('en-IN')}`;
+                        document.getElementById('pyTax').textContent = `₹${pyResult.estimated_tax.toLocaleString('en-IN')}`;
+                        document.getElementById('pyNetProfit').textContent = `₹${pyResult.net_profit.toLocaleString('en-IN')}`;
+                    }
+                }
+            } catch (e) { console.warn("Python engine offline."); }
+        } catch (error) {
+            tbody.innerHTML = '<div class="empty-state">System offline. Please check your connection.</div>';
+            showErrorToast('Network Error: Failed to fetch ledger data.');
+        }
     }
     loadFinanceLedger();
 
@@ -434,15 +453,27 @@ if (window.location.pathname.includes('supply.html')) {
     async function loadSupplyLedger() {
         const tbody = document.getElementById('supplyTableBody');
         if (!tbody) return;
-        const data = await fetchSupplyLedger();
-        tbody.innerHTML = '';
-        (data || []).slice().reverse().forEach((row) => {
-            const statusBadge = row[7] === 'Pending' ? '<span style="color: #ca8a04; font-weight: 600;">⏳ Pending</span>' : (row[7].includes('Dispatched') ? '<span style="color: #3b82f6; font-weight: 600;">🚚 Dispatched</span>' : '<span style="color: #16a34a; font-weight: 600;">✅ Invoiced</span>');
-            const typeBadge = row[2].includes('Purchase') ? '<span class="badge-warning">PO</span>' : '<span class="badge-success">SO</span>';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td style="color: #64748b;">${row[1]}</td><td>${typeBadge}</td><td style="font-weight: 500;">${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td style="font-weight: bold;">₹${parseFloat(row[6] || 0).toLocaleString('en-IN')}</td><td>${statusBadge}</td>`;
-            tbody.appendChild(tr);
-        });
+
+        try {
+            const data = await fetchSupplyLedger();
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<div class="empty-state">No records found for this period.</div>';
+                return;
+            }
+
+            data.slice().reverse().forEach((row) => {
+                const statusBadge = row[7] === 'Pending' ? '<span style="color: #ca8a04; font-weight: 600;">⏳ Pending</span>' : (row[7].includes('Dispatched') ? '<span style="color: #3b82f6; font-weight: 600;">🚚 Dispatched</span>' : '<span style="color: #16a34a; font-weight: 600;">✅ Invoiced</span>');
+                const typeBadge = row[2].includes('Purchase') ? '<span class="badge-warning">PO</span>' : '<span class="badge-success">SO</span>';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td style="color: #64748b;">${row[1]}</td><td>${typeBadge}</td><td style="font-weight: 500;">${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td style="font-weight: bold;">₹${parseFloat(row[6] || 0).toLocaleString('en-IN')}</td><td>${statusBadge}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            tbody.innerHTML = '<div class="empty-state">System offline. Please check your connection.</div>';
+            showErrorToast('Network Error: Failed to fetch ledger data.');
+        }
     }
     loadSupplyLedger();
 

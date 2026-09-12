@@ -246,23 +246,26 @@ app.get('/api/supply', async (req, res) => {
 app.post('/api/supply', async (req, res) => {
     try {
         const { date, type, partner, item, qty, value, status, user } = req.body;
-        let prefix = type.includes('Purchase') ? 'PO' : 'SO';
+        const cleanedQty = parseFloat(qty) || 0;
+        const cleanedValue = parseFloat(value) || 0;
+        const normalizedType = type || '';
+        let prefix = normalizedType.includes('Purchase') ? 'PO' : 'SO';
         const docId = await getNextDocNumber(prefix, 'Supply!A:A');
         const auditLog = `Logged by ${user || 'Unknown'}`;
 
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Supply!A:I', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[docId, date, type, partner, item, qty, value, status, auditLog]] }
+            resource: { values: [[docId, date, normalizedType, partner, item, cleanedQty, cleanedValue, status, auditLog]] }
         });
 
-        const financeType = type.includes('Purchase') ? 'Expense' : 'Income';
-        const financeCategory = type.includes('Purchase') ? 'Supplier Payout' : 'Client Revenue';
-        const financeDesc = `Auto-Synced ${docId}: ${qty}x ${item} (${partner})`;
+        const financeType = normalizedType.includes('Purchase') ? 'Expense' : 'Income';
+        const financeCategory = normalizedType.includes('Purchase') ? 'Supplier Payout' : 'Client Revenue';
+        const financeDesc = `Auto-Synced ${docId}: ${cleanedQty}x ${item} (${partner})`;
 
         const invId = await getNextDocNumber('INV', 'Finance!A:A');
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Finance!A:F', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[invId, date, financeType, financeCategory, value, financeDesc]] }
+            resource: { values: [[invId, date, financeType, financeCategory, cleanedValue, financeDesc]] }
         });
         res.status(201).json({ success: true, docId });
     } catch (error) { res.status(500).json({ success: false }); }
@@ -320,8 +323,8 @@ app.get('/api/production', async (req, res) => {
 app.post('/api/production', async (req, res) => {
     try {
         const { date, product, prodQty, rmItem, rmQty, user } = req.body;
-        const requestedProdQty = Number(prodQty);
-        const requestedRmQty = Number(rmQty);
+        const requestedProdQty = parseFloat(prodQty) || 0;
+        const requestedRmQty = parseFloat(rmQty) || 0;
         if (!product || !rmItem || !Number.isFinite(requestedProdQty) || requestedProdQty < 0 || !Number.isFinite(requestedRmQty) || requestedRmQty < 0) {
             return res.status(400).json({ success: false, message: "Provide valid non-negative production quantities." });
         }
@@ -329,7 +332,7 @@ app.post('/api/production', async (req, res) => {
         const invResp = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E' });
         const invRows = invResp.data.values || [];
         const rawMaterialRow = invRows.find((row, index) => index > 0 && row[1] === rmItem);
-        const currentRmQty = rawMaterialRow ? Number(rawMaterialRow[3]) : NaN;
+        const currentRmQty = rawMaterialRow ? Number(rawMaterialRow[3] || 0) : NaN;
         const newRmQty = currentRmQty - requestedRmQty;
 
         if (!Number.isFinite(currentRmQty) || newRmQty < 0) {
@@ -384,9 +387,10 @@ app.get('/api/finance', async (req, res) => {
 app.post('/api/finance', async (req, res) => {
     try {
         const { txnId, date, type, category, amount, description } = req.body;
+        const safeAmount = parseFloat(amount) || 0;
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Finance!A:F', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[txnId, date, type, category, amount, description]] }
+            resource: { values: [[txnId, date, type, category, safeAmount, description]] }
         });
         res.status(201).json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }

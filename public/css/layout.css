@@ -249,6 +249,49 @@
     overflow-x: hidden; /* Prevents padded elements from stretching */
 }
 
+.table-scroll-wrapper {
+    max-height: calc(100vh - 320px);
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    border-top: 1px solid var(--border-color);
+}
+
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.95rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.toast-error {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #ef4444;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    font-weight: 500;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .page-header {
     display: flex;
     align-items: flex-end;
@@ -693,4 +736,31 @@ button:disabled {
 .erp-scroll::-webkit-scrollbar-thumb {
     background: #94a3b8;
     border-radius: 8px;
+}
+
+@media print {
+    .topbar, .side-nav, form, .btn, button, .export-csv, .toast-error, .log-transaction-section {
+        display: none !important;
+    }
+
+    body, .dashboard-layout, .main-wrapper, .content-area {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .table-scroll-wrapper {
+        max-height: none !important;
+        overflow: visible !important;
+        border: none !important;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
 }
