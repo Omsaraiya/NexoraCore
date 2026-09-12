@@ -119,23 +119,31 @@ app.get('/api/dashboard', async (req, res) => {
 
 app.post('/api/employees', async (req, res) => {
     try {
-        const { empId, name, role, passkey, status } = req.body;
+        const { empId, name, role, department, passkey, status } = req.body;
+        const normalizedName = String(name || '').trim();
+        const normalizedRole = String(role || '').trim();
+        const normalizedDepartment = String(department || '').trim();
+        const normalizedStatus = String(status || 'Active').trim() || 'Active';
+
+        if (!normalizedName || !normalizedRole || !normalizedDepartment) {
+            return res.status(400).json({ success: false, message: 'Employee name, role, and department are required.' });
+        }
 
         // Hash the password before saving to Google Sheets
         const salt = await bcrypt.genSalt(10);
         const hashedKey = await bcrypt.hash(passkey, salt);
 
         await gsapi.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID, range: 'Employees!A:E', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[empId, name, role, hashedKey, status]] }
+            spreadsheetId: SPREADSHEET_ID, range: 'Employees!A:F', valueInputOption: 'USER_ENTERED',
+            resource: { values: [[empId, normalizedName, normalizedRole, hashedKey, normalizedStatus, normalizedDepartment]] }
         });
         res.status(201).json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
+    } catch (error) { res.status(500).json({ success: false, message: 'Unable to provision employee.' }); }
 });
 
 app.get('/api/employees', async (req, res) => {
     try {
-        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Employees!A2:C' };
+        const opt = { spreadsheetId: SPREADSHEET_ID, range: 'Employees!A2:F' };
         let data = await gsapi.spreadsheets.values.get(opt);
         res.status(200).json({ success: true, data: data.data.values || [] });
     } catch (error) { res.status(500).json({ success: false }); }
@@ -177,12 +185,21 @@ app.post('/api/payroll', async (req, res) => {
 app.post('/api/tasks', async (req, res) => {
     try {
         const { employee, task, status, date } = req.body;
+        const normalizedEmployee = String(employee || '').trim();
+        const normalizedTask = String(task || '').trim();
+        const normalizedStatus = String(status || 'Pending').trim() || 'Pending';
+        const normalizedDate = String(date || '').trim();
+
+        if (!normalizedEmployee || !normalizedTask || !normalizedDate) {
+            return res.status(400).json({ success: false, message: 'Employee, task description, and due date are required.' });
+        }
+
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Sheet1!A:D', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[employee, task, status, date]] }
+            resource: { values: [[normalizedEmployee, normalizedTask, normalizedStatus, normalizedDate]] }
         });
         res.status(201).json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
+    } catch (error) { res.status(500).json({ success: false, message: 'Unable to create task.' }); }
 });
 
 app.put('/api/tasks/complete', async (req, res) => {
@@ -246,6 +263,13 @@ app.get('/api/supply', async (req, res) => {
 app.post('/api/supply', async (req, res) => {
     try {
         const { date, type, partner, item, qty, value, status, user } = req.body;
+        const cleanedPartner = String(partner || '').trim();
+        const cleanedItem = String(item || '').trim();
+
+        if (!cleanedPartner || !cleanedItem) {
+            return res.status(400).json({ success: false, message: 'Supplier Name and Item Name are required.' });
+        }
+
         const cleanedQty = parseFloat(qty) || 0;
         const cleanedValue = parseFloat(value) || 0;
         const normalizedType = type || '';
@@ -255,12 +279,12 @@ app.post('/api/supply', async (req, res) => {
 
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Supply!A:I', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[docId, date, normalizedType, partner, item, cleanedQty, cleanedValue, status, auditLog]] }
+            resource: { values: [[docId, date, normalizedType, cleanedPartner, cleanedItem, cleanedQty, cleanedValue, status, auditLog]] }
         });
 
         const financeType = normalizedType.includes('Purchase') ? 'Expense' : 'Income';
         const financeCategory = normalizedType.includes('Purchase') ? 'Supplier Payout' : 'Client Revenue';
-        const financeDesc = `Auto-Synced ${docId}: ${cleanedQty}x ${item} (${partner})`;
+        const financeDesc = `Auto-Synced ${docId}: ${cleanedQty}x ${cleanedItem} (${cleanedPartner})`;
 
         const invId = await getNextDocNumber('INV', 'Finance!A:A');
         await gsapi.spreadsheets.values.append({
@@ -323,15 +347,18 @@ app.get('/api/production', async (req, res) => {
 app.post('/api/production', async (req, res) => {
     try {
         const { date, product, prodQty, rmItem, rmQty, user } = req.body;
+        const normalizedProduct = String(product || '').trim();
+        const normalizedRmItem = String(rmItem || '').trim();
         const requestedProdQty = parseFloat(prodQty) || 0;
         const requestedRmQty = parseFloat(rmQty) || 0;
-        if (!product || !rmItem || !Number.isFinite(requestedProdQty) || requestedProdQty < 0 || !Number.isFinite(requestedRmQty) || requestedRmQty < 0) {
-            return res.status(400).json({ success: false, message: "Provide valid non-negative production quantities." });
+
+        if (!normalizedProduct || !normalizedRmItem || !Number.isFinite(requestedProdQty) || requestedProdQty <= 0 || !Number.isFinite(requestedRmQty) || requestedRmQty <= 0) {
+            return res.status(400).json({ success: false, message: "Provide valid product, raw material, and positive quantities." });
         }
 
         const invResp = await gsapi.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Inventory!A:E' });
         const invRows = invResp.data.values || [];
-        const rawMaterialRow = invRows.find((row, index) => index > 0 && row[1] === rmItem);
+        const rawMaterialRow = invRows.find((row, index) => index > 0 && row[1] === normalizedRmItem);
         const currentRmQty = rawMaterialRow ? Number(rawMaterialRow[3] || 0) : NaN;
         const newRmQty = currentRmQty - requestedRmQty;
 
@@ -387,13 +414,20 @@ app.get('/api/finance', async (req, res) => {
 app.post('/api/finance', async (req, res) => {
     try {
         const { txnId, date, type, category, amount, description } = req.body;
-        const safeAmount = parseFloat(amount) || 0;
+        const normalizedType = String(type || '').trim();
+        const normalizedCategory = String(category || '').trim();
+        const safeAmount = Number.parseFloat(amount);
+
+        if (!normalizedType || !normalizedCategory || !Number.isFinite(safeAmount) || safeAmount <= 0 || !['Income', 'Expense'].includes(normalizedType)) {
+            return res.status(400).json({ success: false, message: 'Provide a valid transaction type, category, and amount greater than zero.' });
+        }
+
         await gsapi.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID, range: 'Finance!A:F', valueInputOption: 'USER_ENTERED',
-            resource: { values: [[txnId, date, type, category, safeAmount, description]] }
+            resource: { values: [[txnId, date, normalizedType, normalizedCategory, safeAmount, description || '']] }
         });
         res.status(201).json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
+    } catch (error) { res.status(500).json({ success: false, message: 'Unable to save transaction.' }); }
 });
 
 const PORT = process.env.PORT || 3000;

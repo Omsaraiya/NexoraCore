@@ -445,6 +445,36 @@
     display: inline-block;
 }
 
+.badge-active {
+    color: #166534;
+    background: #dcfce7;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.badge-suspended {
+    color: #991b1b;
+    background: #fee2e2;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.badge-inactive {
+    color: #475569;
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
 .badge-warning {
     color: #ea580c;
     background: #ffedd5;
@@ -453,6 +483,74 @@
     font-size: 12px;
     font-weight: bold;
     display: inline-block;
+}
+
+.badge-pending {
+    color: #92400e;
+    background: #fef3c7;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.badge-in-progress {
+    color: #1d4ed8;
+    background: #dbeafe;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.badge-income {
+    color: #166534;
+    background: #dcfce7;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.badge-expense {
+    color: #b45309;
+    background: #ffedd5;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    min-width: 86px;
+    text-align: center;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-dispatched {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-invoiced {
+    background: #dcfce7;
+    color: #166534;
 }
 
 /* Form Elements */

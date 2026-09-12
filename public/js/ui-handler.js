@@ -92,11 +92,20 @@ if (window.location.pathname.includes('hr.html')) {
     const openBtn = document.getElementById('openAddEmployeeModal');
     const closeBtn = document.getElementById('closeModalBtn');
 
+    function renderEmployeeStatusBadge(status) {
+        const normalizedStatus = String(status || '').trim();
+        if (!normalizedStatus || normalizedStatus === 'Active') return '<span class="badge-active">Active</span>';
+        if (normalizedStatus === 'Suspended') return '<span class="badge-suspended">Suspended</span>';
+        if (normalizedStatus === 'Inactive') return '<span class="badge-inactive">Inactive</span>';
+        return '<span class="badge-active">Active</span>';
+    }
+
     if (openBtn && closeBtn && addModal) {
         openBtn.addEventListener('click', () => addModal.classList.add('active'));
         closeBtn.addEventListener('click', () => {
             addModal.classList.remove('active');
-            document.getElementById('newCredentialsDisplay').style.display = 'none';
+            const credentialsDisplay = document.getElementById('newCredentialsDisplay');
+            if (credentialsDisplay) credentialsDisplay.style.display = 'none';
         });
         addModal.addEventListener('click', (e) => {
             if (e.target === addModal) addModal.classList.remove('active');
@@ -106,18 +115,26 @@ if (window.location.pathname.includes('hr.html')) {
     async function loadDirectory() {
         const tbody = document.getElementById('hrTableBody');
         if (!tbody) return;
-        const data = await fetchEmployees();
-        tbody.innerHTML = '';
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No staff found.</td></tr>`;
-            return;
+
+        try {
+            const data = await fetchEmployees();
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state" style="text-align:center; padding: 20px; color: #64748b;">No staff found.</td></tr>';
+                return;
+            }
+
+            data.forEach((row) => {
+                const statusBadge = renderEmployeeStatusBadge(row[4] || 'Active');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="font-weight:bold; color:#072a4f;">${row[0] || 'N/A'}</td><td>${row[1] || 'N/A'}</td><td>${row[2] || 'Unassigned'}</td><td>${statusBadge}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-state" style="text-align:center; padding: 20px; color: #64748b;">System offline. Please retry later.</td></tr>';
+            showErrorToast(error.message || 'Network Error: Failed to fetch employee directory.');
         }
-        data.forEach((row) => {
-            const statusBadge = (row[4] || 'Active') === 'Active' ? '<span class="badge-success">Active</span>' : '<span class="badge-warning">Suspended</span>';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td style="font-weight:bold; color:#072a4f;">${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${statusBadge}</td>`;
-            tbody.appendChild(tr);
-        });
     }
     loadDirectory();
 
@@ -125,29 +142,44 @@ if (window.location.pathname.includes('hr.html')) {
     if (hrForm) {
         hrForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const employeeName = document.getElementById('empName').value.trim();
+            const employeeRole = document.getElementById('empRole').value.trim();
+            const employeeDepartment = document.getElementById('empDepartment').value.trim();
+
+            if (!employeeName || !employeeRole || !employeeDepartment) {
+                showErrorToast('Please provide the employee name, role, and department before onboarding.');
+                return;
+            }
+
             setFormProcessing(hrForm, true, 'Provisioning...');
             try {
                 const generatedId = 'EMP-' + Math.floor(1000 + Math.random() * 9000);
                 const generatedKey = Math.random().toString(36).slice(-6).toUpperCase();
                 const payload = {
                     empId: generatedId,
-                    name: document.getElementById('empName').value.trim(),
-                    role: document.getElementById('empRole').value,
+                    name: employeeName,
+                    role: employeeRole,
+                    department: employeeDepartment,
                     passkey: generatedKey,
                     status: 'Active'
                 };
                 const result = await registerEmployee(payload);
-                if (result.success) {
-                    hrForm.reset();
-                    loadDirectory();
-                    document.getElementById('newCredentialsDisplay').style.display = 'block';
+                if (!result || result.success === false) {
+                    throw new Error(result && result.message ? result.message : 'Failed to provision employee.');
+                }
+
+                hrForm.reset();
+                await loadDirectory();
+
+                const credentialsDisplay = document.getElementById('newCredentialsDisplay');
+                if (credentialsDisplay) {
+                    credentialsDisplay.style.display = 'block';
                     document.getElementById('displayId').textContent = generatedId;
                     document.getElementById('displayKey').textContent = generatedKey;
-                } else {
-                    throw new Error(result.message || "Failed to provision employee.");
                 }
             } catch (error) {
-                alert(error.message || "Unable to provision employee.");
+                showErrorToast(error.message || 'Unable to provision employee.');
             } finally {
                 setFormProcessing(hrForm, false);
             }
@@ -158,8 +190,13 @@ if (window.location.pathname.includes('hr.html')) {
     if (clockInBtn) {
         clockInBtn.addEventListener('click', async () => {
             const empId = document.getElementById('attEmpId').value.trim();
-            const data = await apiCall('/api/attendance', 'POST', { empId });
-            alert(data.message || "Shift logged.");
+            try {
+                const data = await apiCall('/api/attendance', 'POST', { empId });
+                if (!data || data.success === false) throw new Error(data && data.message ? data.message : 'Unable to log shift.');
+                showErrorToast('Shift logged successfully.');
+            } catch (error) {
+                showErrorToast(error.message || 'Unable to log shift.');
+            }
         });
     }
 
@@ -168,8 +205,13 @@ if (window.location.pathname.includes('hr.html')) {
         runPayrollBtn.addEventListener('click', async () => {
             const empId = document.getElementById('payrollEmpId').value.trim();
             const user = localStorage.getItem('nexora_session_name') || 'Unknown';
-            const data = await apiCall('/api/payroll', 'POST', { empId, user });
-            alert(data.message || "Payroll processed.");
+            try {
+                const data = await apiCall('/api/payroll', 'POST', { empId, user });
+                if (!data || data.success === false) throw new Error(data && data.message ? data.message : 'Unable to process payroll.');
+                showErrorToast(data.message || 'Payroll processed.');
+            } catch (error) {
+                showErrorToast(error.message || 'Unable to process payroll.');
+            }
         });
     }
 }
@@ -267,31 +309,58 @@ if (window.location.pathname.includes('dashboard.html')) {
 // TASKS, INVENTORY, FINANCE, SUPPLY, QC, PROD
 // ==========================================
 if (window.location.pathname.includes('tasks.html')) {
+    function renderTaskStatusBadge(status) {
+        const normalizedStatus = String(status || '').trim();
+        if (!normalizedStatus) return '<span class="badge-pending">Pending</span>';
+        if (normalizedStatus === 'Completed') return '<span class="badge-success">Completed</span>';
+        if (normalizedStatus === 'In Progress') return '<span class="badge-in-progress">In Progress</span>';
+        return '<span class="badge-pending">Pending</span>';
+    }
+
     async function populateEmployeeDropdown() {
         const empSelect = document.getElementById('empName');
         if (!empSelect) return;
-        const employees = await fetchEmployees();
-        empSelect.innerHTML = '<option value="">-- Select Employee --</option>';
-        employees.forEach(emp => {
-            if (emp[1]) empSelect.appendChild(new Option(`${emp[1]} (${emp[2] || 'Staff'})`, emp[1]));
-        });
+
+        try {
+            const employees = await fetchEmployees();
+            empSelect.innerHTML = '<option value="">-- Select Employee --</option>';
+            (employees || []).forEach(emp => {
+                if (emp[1]) empSelect.appendChild(new Option(`${emp[1]} (${emp[2] || 'Staff'})`, emp[1]));
+            });
+        } catch (error) {
+            empSelect.innerHTML = '<option value="">Unable to load employees</option>';
+            showErrorToast(error.message || 'Failed to load employees.');
+        }
     }
     populateEmployeeDropdown();
 
     async function loadManagementTable() {
         const tbody = document.getElementById('managementTableBody');
         if (!tbody) return;
-        const data = await fetchDashboardStats();
-        tbody.innerHTML = '';
-        (data || []).forEach((row, index) => {
-            const tr = document.createElement('tr');
-            const qaStatus = row[5] || '';
-            let actionHtml = row[2] === 'Pending'
-                ? `<button onclick="completeTask(${index})" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">✔ Mark Done</button>`
-                : (row[2] === 'Completed' && qaStatus === '' ? `<button onclick="submitQA(${index}, 'Pass')" style="background: #3b82f6; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Pass</button> <button onclick="submitQA(${index}, 'Fail')" style="background: #dc2626; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Fail</button>` : `<span style="color: ${qaStatus === 'Pass' ? '#16a34a' : '#dc2626'}; font-size: 13px; font-weight: bold;">QA: ${qaStatus}</span>`);
-            tr.innerHTML = `<td><strong>${row[0] || 'N/A'}</strong></td><td>${row[1] || 'N/A'}</td><td>${row[3] || 'N/A'}</td><td>${actionHtml}</td>`;
-            tbody.appendChild(tr);
-        });
+
+        try {
+            const data = await fetchDashboardStats();
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state" style="text-align:center; padding: 20px; color: #64748b;">No tasks found for this period.</td></tr>';
+                return;
+            }
+
+            (data || []).forEach((row, index) => {
+                const tr = document.createElement('tr');
+                const taskStatus = String(row[2] || '').trim() || 'Pending';
+                const qaStatus = row[5] || '';
+                let actionHtml = taskStatus === 'Pending'
+                    ? `<button onclick="completeTask(${index})" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">✔ Mark Done</button>`
+                    : (taskStatus === 'Completed' && qaStatus === '' ? `<button onclick="submitQA(${index}, 'Pass')" style="background: #3b82f6; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Pass</button> <button onclick="submitQA(${index}, 'Fail')" style="background: #dc2626; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Fail</button>` : `<span style="color: ${qaStatus === 'Pass' ? '#16a34a' : '#dc2626'}; font-size: 13px; font-weight: bold;">QA: ${qaStatus}</span>`);
+                tr.innerHTML = `<td><strong>${row[0] || 'N/A'}</strong></td><td>${row[1] || 'N/A'}</td><td>${row[3] || 'N/A'}</td><td>${renderTaskStatusBadge(taskStatus)}</td><td>${actionHtml}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state" style="text-align:center; padding: 20px; color: #64748b;">System offline. Please retry later.</td></tr>';
+            showErrorToast(error.message || 'Network Error: Failed to fetch tasks.');
+        }
     }
     loadManagementTable();
 
@@ -299,22 +368,53 @@ if (window.location.pathname.includes('tasks.html')) {
     if (taskForm) {
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const assignee = document.getElementById('empName').value.trim();
+            const taskDescription = document.getElementById('taskDesc').value.trim();
+            const dueDate = document.getElementById('dueDate').value;
+
+            if (!assignee || !taskDescription || !dueDate) {
+                showErrorToast('Please provide the assignee, task description, and due date.');
+                return;
+            }
+
             setFormProcessing(taskForm, true);
-            const payload = { employee: document.getElementById('empName').value.trim(), task: document.getElementById('taskDesc').value.trim(), status: 'Pending', date: document.getElementById('dueDate').value };
+            const payload = { employee: assignee, task: taskDescription, status: 'Pending', date: dueDate };
+
             try {
-                await createNewTask(payload);
+                const result = await createNewTask(payload);
+                if (!result || result.success === false) {
+                    throw new Error(result && result.message ? result.message : 'Unable to create task.');
+                }
                 taskForm.reset();
-                loadManagementTable();
+                await loadManagementTable();
             } catch (error) {
-                alert(error.message || "Unable to create task.");
+                showErrorToast(error.message || 'Unable to create task.');
             } finally {
                 setFormProcessing(taskForm, false);
             }
         });
     }
 
-    window.completeTask = async function (index) { await markTaskCompleted(index); loadManagementTable(); };
-    window.submitQA = async function (index, status) { await updateQAStatus(index, status); loadManagementTable(); };
+    window.completeTask = async function (index) {
+        try {
+            const result = await markTaskCompleted(index);
+            if (!result || result.success === false) throw new Error(result && result.message ? result.message : 'Unable to complete task.');
+            await loadManagementTable();
+        } catch (error) {
+            showErrorToast(error.message || 'Unable to complete task.');
+        }
+    };
+
+    window.submitQA = async function (index, status) {
+        try {
+            const result = await updateQAStatus(index, status);
+            if (!result || result.success === false) throw new Error(result && result.message ? result.message : 'Unable to submit QA result.');
+            await loadManagementTable();
+        } catch (error) {
+            showErrorToast(error.message || 'Unable to submit QA result.');
+        }
+    };
 }
 
 if (window.location.pathname.includes('inventory.html')) {
@@ -385,18 +485,21 @@ if (window.location.pathname.includes('finance.html')) {
             tbody.innerHTML = '';
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<div class="empty-state">No records found for this period.</div>';
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state" style="text-align:center; padding: 20px; color: #64748b;">No records found for this period.</td></tr>';
                 return;
             }
 
             let totalInc = 0, totalExp = 0;
 
             data.slice().reverse().forEach((row) => {
-                const amt = parseFloat(row[4]) || 0;
-                if (row[2] === 'Income') totalInc += amt;
-                if (row[2] === 'Expense') totalExp += amt;
+                const amt = Number.parseFloat(row[4]) || 0;
+                const rawType = String(row[2] || '').trim();
+                const normalizedType = rawType === 'Expense' ? 'Expense' : 'Income';
+                if (normalizedType === 'Income') totalInc += amt;
+                if (normalizedType === 'Expense') totalExp += amt;
+
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="color: #64748b;">${row[1]}</td><td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td><span class="${row[2] === 'Income' ? 'badge-success' : 'badge-warning'}">${row[2].toUpperCase()}</span></td><td>${row[3]}</td><td style="font-weight: bold; color: ${row[2] === 'Income' ? '#16a34a' : '#dc2626'};">₹${amt.toLocaleString('en-IN')}</td>`;
+                tr.innerHTML = `<td style="color: #64748b;">${row[1] || '-'}</td><td style="font-weight: bold; color: #072a4f;">${row[0] || '-'}</td><td><span class="${normalizedType === 'Income' ? 'badge-income' : 'badge-expense'}">${normalizedType.toUpperCase()}</span></td><td>${row[3] || '-'}</td><td style="font-weight: bold; color: ${normalizedType === 'Income' ? '#16a34a' : '#dc2626'};">₹${amt.toLocaleString('en-IN')}</td>`;
                 tbody.appendChild(tr);
             });
 
@@ -410,14 +513,14 @@ if (window.location.pathname.includes('finance.html')) {
                 if (typeof calculateTaxWithPython === "function") {
                     const pyResult = await calculateTaxWithPython(totalInc, totalExp);
                     if (pyResult && pyResult.success) {
-                        document.getElementById('pyGrossProfit').textContent = `₹${pyResult.gross_profit.toLocaleString('en-IN')}`;
-                        document.getElementById('pyTax').textContent = `₹${pyResult.estimated_tax.toLocaleString('en-IN')}`;
-                        document.getElementById('pyNetProfit').textContent = `₹${pyResult.net_profit.toLocaleString('en-IN')}`;
+                        document.getElementById('pyGrossProfit').textContent = `₹${Number(pyResult.gross_profit || 0).toLocaleString('en-IN')}`;
+                        document.getElementById('pyTax').textContent = `₹${Number(pyResult.estimated_tax || 0).toLocaleString('en-IN')}`;
+                        document.getElementById('pyNetProfit').textContent = `₹${Number(pyResult.net_profit || 0).toLocaleString('en-IN')}`;
                     }
                 }
             } catch (e) { console.warn("Python engine offline."); }
         } catch (error) {
-            tbody.innerHTML = '<div class="empty-state">System offline. Please check your connection.</div>';
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state" style="text-align:center; padding: 20px; color: #64748b;">System offline. Please check your connection.</td></tr>';
             showErrorToast('Network Error: Failed to fetch ledger data.');
         }
     }
@@ -427,21 +530,36 @@ if (window.location.pathname.includes('finance.html')) {
     if (financeForm) {
         financeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const txnType = document.getElementById('txnType').value.trim();
+            const txnCategory = document.getElementById('txnCategory').value.trim();
+            const txnAmountRaw = document.getElementById('txnAmount').value;
+            const parsedAmount = Number.parseFloat(txnAmountRaw);
+
+            if (!txnType || !txnCategory || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+                showErrorToast('Please provide a valid transaction type, category, and amount greater than zero.');
+                return;
+            }
+
             setFormProcessing(financeForm, true);
             const payload = {
                 txnId: 'TXN-' + Math.floor(100000 + Math.random() * 900000),
                 date: new Date().toISOString().split('T')[0],
-                type: document.getElementById('txnType').value,
-                category: document.getElementById('txnCategory').value.trim(),
-                amount: document.getElementById('txnAmount').value,
+                type: txnType,
+                category: txnCategory,
+                amount: parsedAmount,
                 description: document.getElementById('txnDesc').value.trim()
             };
+
             try {
-                await addTransaction(payload);
+                const result = await addTransaction(payload);
+                if (!result || result.success === false) {
+                    throw new Error(result && result.message ? result.message : 'Unable to save transaction.');
+                }
                 financeForm.reset();
-                loadFinanceLedger();
+                await loadFinanceLedger();
             } catch (error) {
-                alert(error.message || "Unable to save transaction.");
+                showErrorToast(error.message || 'Unable to save transaction.');
             } finally {
                 setFormProcessing(financeForm, false);
             }
@@ -450,6 +568,15 @@ if (window.location.pathname.includes('finance.html')) {
 }
 
 if (window.location.pathname.includes('supply.html')) {
+    function renderStatusBadge(status) {
+        const safeStatus = (status || '').toString().trim();
+        if (!safeStatus) return '<span class="status-badge status-pending">—</span>';
+        if (safeStatus === 'Pending') return '<span class="status-badge status-pending">⏳ Pending</span>';
+        if (safeStatus.includes('Dispatched') || safeStatus.includes('Delivered')) return '<span class="status-badge status-dispatched">🚚 In Transit</span>';
+        if (safeStatus.includes('Invoiced') || safeStatus.includes('Settled')) return '<span class="status-badge status-invoiced">✅ Invoiced</span>';
+        return `<span class="status-badge status-pending">${safeStatus}</span>`;
+    }
+
     async function loadSupplyLedger() {
         const tbody = document.getElementById('supplyTableBody');
         if (!tbody) return;
@@ -464,10 +591,11 @@ if (window.location.pathname.includes('supply.html')) {
             }
 
             data.slice().reverse().forEach((row) => {
-                const statusBadge = row[7] === 'Pending' ? '<span style="color: #ca8a04; font-weight: 600;">⏳ Pending</span>' : (row[7].includes('Dispatched') ? '<span style="color: #3b82f6; font-weight: 600;">🚚 Dispatched</span>' : '<span style="color: #16a34a; font-weight: 600;">✅ Invoiced</span>');
-                const typeBadge = row[2].includes('Purchase') ? '<span class="badge-warning">PO</span>' : '<span class="badge-success">SO</span>';
+                const safeStatus = Array.isArray(row) && row[7] ? row[7] : '';
+                const safeType = Array.isArray(row) && row[2] ? row[2] : '';
+                const typeBadge = safeType.includes('Purchase') ? '<span class="badge-warning">PO</span>' : '<span class="badge-success">SO</span>';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td style="color: #64748b;">${row[1]}</td><td>${typeBadge}</td><td style="font-weight: 500;">${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td style="font-weight: bold;">₹${parseFloat(row[6] || 0).toLocaleString('en-IN')}</td><td>${statusBadge}</td>`;
+                tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0] || 'N/A'}</td><td style="color: #64748b;">${row[1] || 'N/A'}</td><td>${typeBadge}</td><td style="font-weight: 500;">${row[3] || 'N/A'}</td><td>${row[4] || 'N/A'}</td><td>${row[5] || 0}</td><td style="font-weight: bold;">₹${parseFloat(row[6] || 0).toLocaleString('en-IN')}</td><td>${renderStatusBadge(safeStatus)}</td>`;
                 tbody.appendChild(tr);
             });
         } catch (error) {
@@ -481,14 +609,23 @@ if (window.location.pathname.includes('supply.html')) {
     if (supplyForm) {
         supplyForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const partner = document.getElementById('supplyPartner').value.trim();
+            const item = document.getElementById('supplyItem').value.trim();
+
+            if (!partner || !item) {
+                alert('Supplier Name and Item Name are required before submitting a supply event.');
+                return;
+            }
+
             setFormProcessing(supplyForm, true);
             const payload = {
                 date: new Date().toISOString().split('T')[0],
                 type: document.getElementById('supplyType').value,
-                partner: document.getElementById('supplyPartner').value.trim(),
-                item: document.getElementById('supplyItem').value.trim(),
-                qty: parseInt(document.getElementById('supplyQty').value),
-                value: parseFloat(document.getElementById('supplyValue').value),
+                partner,
+                item,
+                qty: parseInt(document.getElementById('supplyQty').value) || 0,
+                value: parseFloat(document.getElementById('supplyValue').value) || 0,
                 status: document.getElementById('supplyStatus').value,
                 user: localStorage.getItem('nexora_session_name') || 'Unknown'
             };
@@ -496,7 +633,7 @@ if (window.location.pathname.includes('supply.html')) {
                 const result = await addSupplyEvent(payload);
                 if (!result.success) throw new Error(result.message || "Unable to save supply event.");
                 supplyForm.reset();
-                loadSupplyLedger();
+                await loadSupplyLedger();
             } catch (error) {
                 alert(error.message || "Unable to save supply event.");
             } finally {
@@ -535,16 +672,38 @@ if (window.location.pathname.includes('qc.html')) {
 }
 
 if (window.location.pathname.includes('production.html')) {
+    function renderProductionStatusBadge(status) {
+        const safeStatus = (status || '').toString().trim();
+        if (!safeStatus) return '<span class="status-badge status-in-progress">—</span>';
+        if (safeStatus.toLowerCase().includes('completed')) return '<span class="status-badge status-completed">✔ Completed</span>';
+        if (safeStatus.toLowerCase().includes('in progress') || safeStatus.toLowerCase().includes('progress')) return '<span class="status-badge status-in-progress">🟦 In Progress</span>';
+        if (safeStatus.toLowerCase().includes('blocked') || safeStatus.toLowerCase().includes('rejected')) return '<span class="status-badge status-blocked">⚠ Blocked</span>';
+        return `<span class="status-badge status-in-progress">${safeStatus}</span>`;
+    }
+
     async function loadProductionLedger() {
         const tbody = document.getElementById('prodTableBody');
         if (!tbody) return;
-        const result = await apiCall('/api/production');
-        tbody.innerHTML = '';
-        (result.data || []).slice().reverse().forEach((row) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0]}</td><td style="color: #64748b;">${row[1]}</td><td>${row[2]}</td><td style="font-weight: bold;">${row[3]}</td><td><span class="badge-success">✔ Completed</span></td>`;
-            tbody.appendChild(tr);
-        });
+
+        try {
+            const result = await apiCall('/api/production');
+            tbody.innerHTML = '';
+
+            if (!result.data || result.data.length === 0) {
+                tbody.innerHTML = '<div class="empty-state">No production records found.</div>';
+                return;
+            }
+
+            (result.data || []).slice().reverse().forEach((row) => {
+                const status = row[5] || 'Completed';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0] || 'N/A'}</td><td style="color: #64748b;">${row[1] || 'N/A'}</td><td>${row[2] || 'N/A'}</td><td style="font-weight: bold;">${row[3] || 0}</td><td>${renderProductionStatusBadge(status)}</td>`;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            tbody.innerHTML = '<div class="empty-state">System offline. Please check your connection.</div>';
+            showErrorToast('Network Error: Failed to fetch production ledger data.');
+        }
     }
     loadProductionLedger();
 
@@ -552,26 +711,39 @@ if (window.location.pathname.includes('production.html')) {
     if (prodForm) {
         prodForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const product = document.getElementById('prodItem').value.trim();
+            const rmItem = document.getElementById('rmItem').value.trim();
+            const prodQty = parseFloat(document.getElementById('prodQty').value);
+            const rmQty = parseFloat(document.getElementById('rmQty').value);
+
+            if (!product || !rmItem || !Number.isFinite(prodQty) || prodQty <= 0 || !Number.isFinite(rmQty) || rmQty <= 0) {
+                showErrorToast('Production validation failed: Product, raw material, and quantity are required.');
+                return;
+            }
+
             setFormProcessing(prodForm, true);
             const payload = {
                 date: new Date().toISOString().split('T')[0],
-                product: document.getElementById('prodItem').value.trim(),
-                prodQty: parseInt(document.getElementById('prodQty').value),
-                rmItem: document.getElementById('rmItem').value.trim(),
-                rmQty: parseInt(document.getElementById('rmQty').value),
+                product,
+                prodQty,
+                rmItem,
+                rmQty,
                 user: localStorage.getItem('nexora_session_name') || 'Operator'
             };
             try {
                 const result = await apiCall('/api/production', 'POST', payload);
                 if (result.success) {
                     prodForm.reset();
-                    loadProductionLedger();
-                    alert("Production logged.");
+                    await loadProductionLedger();
+                    showErrorToast('Production logged successfully.');
                 } else {
-                    throw new Error(result.message || "Insufficient raw material stock.");
+                    const message = result.message || 'Insufficient raw material stock.';
+                    showErrorToast(message);
+                    throw new Error(message);
                 }
             } catch (error) {
-                alert("Error: " + (error.message || "Unable to log production."));
+                showErrorToast(error.message || 'Unable to log production.');
             } finally {
                 setFormProcessing(prodForm, false);
             }
