@@ -112,6 +112,18 @@ if (window.location.pathname.includes('hr.html')) {
         });
     }
 
+    function getRolePermissions(role) {
+        const normalizedRole = String(role || '').trim();
+        const permissionMap = {
+            Admin: ['Supply', 'Production', 'Finance', 'Tasks', 'HR'],
+            Manager: ['Supply', 'Production', 'Tasks'],
+            Accountant: ['Finance'],
+            'Floor Supervisor': ['Production', 'Tasks']
+        };
+
+        return permissionMap[normalizedRole] || ['HR'];
+    }
+
     async function loadDirectory() {
         const tbody = document.getElementById('hrTableBody');
         if (!tbody) return;
@@ -127,8 +139,10 @@ if (window.location.pathname.includes('hr.html')) {
 
             data.forEach((row) => {
                 const statusBadge = renderEmployeeStatusBadge(row[4] || 'Active');
+                const roleName = row[2] || 'Unassigned';
+                const permissions = getRolePermissions(roleName).map((permission) => `<span class="micro-badge">${permission}</span>`).join('');
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="font-weight:bold; color:#072a4f;">${row[0] || 'N/A'}</td><td>${row[1] || 'N/A'}</td><td>${row[2] || 'Unassigned'}</td><td>${statusBadge}</td>`;
+                tr.innerHTML = `<td style="font-weight:bold; color:#072a4f;">${row[0] || 'N/A'}</td><td>${row[1] || 'N/A'}</td><td><div>${roleName}</div><div class="micro-badge-group">${permissions}</div></td><td>${statusBadge}</td>`;
                 tbody.appendChild(tr);
             });
         } catch (error) {
@@ -323,9 +337,25 @@ if (window.location.pathname.includes('tasks.html')) {
 
         try {
             const employees = await fetchEmployees();
+            const tasks = await fetchDashboardStats();
+            const workloadMap = {};
+
+            (tasks || []).forEach((row) => {
+                const employee = String(row[0] || '').trim();
+                const status = String(row[2] || '').trim();
+                if (!employee) return;
+                if (status === 'Pending' || status === 'In Progress') {
+                    workloadMap[employee] = (workloadMap[employee] || 0) + 1;
+                }
+            });
+
             empSelect.innerHTML = '<option value="">-- Select Employee --</option>';
             (employees || []).forEach(emp => {
-                if (emp[1]) empSelect.appendChild(new Option(`${emp[1]} (${emp[2] || 'Staff'})`, emp[1]));
+                if (emp[1]) {
+                    const employeeName = emp[1];
+                    const openCount = workloadMap[employeeName] || 0;
+                    empSelect.appendChild(new Option(`${employeeName} (${openCount} open)`, employeeName));
+                }
             });
         } catch (error) {
             empSelect.innerHTML = '<option value="">Unable to load employees</option>';
@@ -351,10 +381,23 @@ if (window.location.pathname.includes('tasks.html')) {
                 const tr = document.createElement('tr');
                 const taskStatus = String(row[2] || '').trim() || 'Pending';
                 const qaStatus = row[5] || '';
+                const dueDate = row[3] || '';
+                let dueDateClass = '';
+
+                if (taskStatus !== 'Completed' && dueDate) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const due = new Date(`${dueDate}T00:00:00`);
+                    const diffDays = Math.ceil((due - today) / 86400000);
+                    if (diffDays <= 2) {
+                        dueDateClass = 'text-danger-pulse';
+                    }
+                }
+
                 let actionHtml = taskStatus === 'Pending'
                     ? `<button onclick="completeTask(${index})" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">✔ Mark Done</button>`
                     : (taskStatus === 'Completed' && qaStatus === '' ? `<button onclick="submitQA(${index}, 'Pass')" style="background: #3b82f6; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Pass</button> <button onclick="submitQA(${index}, 'Fail')" style="background: #dc2626; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Fail</button>` : `<span style="color: ${qaStatus === 'Pass' ? '#16a34a' : '#dc2626'}; font-size: 13px; font-weight: bold;">QA: ${qaStatus}</span>`);
-                tr.innerHTML = `<td><strong>${row[0] || 'N/A'}</strong></td><td>${row[1] || 'N/A'}</td><td>${row[3] || 'N/A'}</td><td>${renderTaskStatusBadge(taskStatus)}</td><td>${actionHtml}</td>`;
+                tr.innerHTML = `<td><strong>${row[0] || 'N/A'}</strong></td><td>${row[1] || 'N/A'}</td><td><span class="${dueDateClass}">${dueDate || 'N/A'}</span></td><td>${renderTaskStatusBadge(taskStatus)}</td><td>${actionHtml}</td>`;
                 tbody.appendChild(tr);
             });
         } catch (error) {
@@ -387,6 +430,7 @@ if (window.location.pathname.includes('tasks.html')) {
                     throw new Error(result && result.message ? result.message : 'Unable to create task.');
                 }
                 taskForm.reset();
+                await populateEmployeeDropdown();
                 await loadManagementTable();
             } catch (error) {
                 showErrorToast(error.message || 'Unable to create task.');
@@ -400,6 +444,7 @@ if (window.location.pathname.includes('tasks.html')) {
         try {
             const result = await markTaskCompleted(index);
             if (!result || result.success === false) throw new Error(result && result.message ? result.message : 'Unable to complete task.');
+            await populateEmployeeDropdown();
             await loadManagementTable();
         } catch (error) {
             showErrorToast(error.message || 'Unable to complete task.');
@@ -410,6 +455,7 @@ if (window.location.pathname.includes('tasks.html')) {
         try {
             const result = await updateQAStatus(index, status);
             if (!result || result.success === false) throw new Error(result && result.message ? result.message : 'Unable to submit QA result.');
+            await populateEmployeeDropdown();
             await loadManagementTable();
         } catch (error) {
             showErrorToast(error.message || 'Unable to submit QA result.');
@@ -513,9 +559,44 @@ if (window.location.pathname.includes('finance.html')) {
                 if (typeof calculateTaxWithPython === "function") {
                     const pyResult = await calculateTaxWithPython(totalInc, totalExp);
                     if (pyResult && pyResult.success) {
-                        document.getElementById('pyGrossProfit').textContent = `₹${Number(pyResult.gross_profit || 0).toLocaleString('en-IN')}`;
-                        document.getElementById('pyTax').textContent = `₹${Number(pyResult.estimated_tax || 0).toLocaleString('en-IN')}`;
-                        document.getElementById('pyNetProfit').textContent = `₹${Number(pyResult.net_profit || 0).toLocaleString('en-IN')}`;
+                        const grossProfit = Number(pyResult.gross_profit || 0);
+                        const gstValue = Number(pyResult.estimated_tax || 0);
+                        const netProfit = Number(pyResult.net_profit || 0);
+
+                        document.getElementById('pyGrossProfit').textContent = `₹${grossProfit.toLocaleString('en-IN')}`;
+                        document.getElementById('pyTax').textContent = `₹${gstValue.toLocaleString('en-IN')}`;
+                        document.getElementById('pyNetProfit').textContent = `₹${netProfit.toLocaleString('en-IN')}`;
+
+                        const waterfallContainer = document.getElementById('margin-waterfall-container');
+                        const gstAdvisoryCard = document.getElementById('gst-advisory-card');
+
+                        if (waterfallContainer) {
+                            const revenue = Math.max(totalInc, 0);
+                            const expensePct = revenue > 0 ? Math.min((totalExp / revenue) * 100, 100) : 0;
+                            const gstPct = revenue > 0 ? Math.min((gstValue / revenue) * 100, 100) : 0;
+                            const profitPct = revenue > 0 ? Math.min((netProfit / revenue) * 100, 100) : 0;
+
+                            const segments = [
+                                { selector: '.waterfall-expense', value: expensePct },
+                                { selector: '.waterfall-gst', value: gstPct },
+                                { selector: '.waterfall-profit', value: profitPct }
+                            ];
+
+                            segments.forEach((segment) => {
+                                const el = waterfallContainer.querySelector(segment.selector);
+                                if (el) el.style.width = `${segment.value}%`;
+                            });
+                        }
+
+                        if (gstAdvisoryCard) {
+                            if (gstValue > 0) {
+                                gstAdvisoryCard.innerHTML = `Business Intelligence: A GST liability of ₹${gstValue.toLocaleString('en-IN')} was applied. Your True Net Profit after tax is ₹${netProfit.toLocaleString('en-IN')}.`;
+                                gstAdvisoryCard.style.display = 'block';
+                            } else {
+                                gstAdvisoryCard.style.display = 'none';
+                                gstAdvisoryCard.innerHTML = '';
+                            }
+                        }
                     }
                 }
             } catch (e) { console.warn("Python engine offline."); }
@@ -708,6 +789,65 @@ if (window.location.pathname.includes('production.html')) {
     loadProductionLedger();
 
     const prodForm = document.getElementById('productionForm');
+    const materialPreviewPanel = document.getElementById('material-preview-panel');
+    const materialInput = document.getElementById('rmItem');
+    const materialQtyInput = document.getElementById('rmQty');
+    const prodSubmitBtn = document.getElementById('prodBtn');
+
+    function applyMaterialPreviewState(state, message) {
+        if (!materialPreviewPanel || !prodSubmitBtn) return;
+
+        materialPreviewPanel.className = 'preview-panel';
+        materialPreviewPanel.dataset.state = state;
+        materialPreviewPanel.innerHTML = `<span>${state === 'success' ? '✅' : state === 'warning' ? '⚠️' : 'ℹ️'}</span><span>${message}</span>`;
+        materialPreviewPanel.classList.add('visible');
+
+        if (state === 'success') {
+            materialPreviewPanel.classList.add('success');
+            prodSubmitBtn.disabled = false;
+        } else if (state === 'warning') {
+            materialPreviewPanel.classList.add('warning');
+            prodSubmitBtn.disabled = true;
+        } else {
+            prodSubmitBtn.disabled = false;
+        }
+    }
+
+    async function checkMaterialAvailability() {
+        if (!materialPreviewPanel || !materialInput || !materialQtyInput || !prodSubmitBtn) return;
+
+        const rawMaterial = materialInput.value.trim();
+        const requestedQty = parseFloat(materialQtyInput.value);
+
+        if (!rawMaterial || !Number.isFinite(requestedQty) || requestedQty <= 0) {
+            applyMaterialPreviewState('neutral', 'Enter a raw material and quantity to preview stock availability.');
+            return;
+        }
+
+        try {
+            const inventory = await fetchInventory();
+            const match = (inventory || []).find((row) => String(row[1] || '').trim().toLowerCase() === rawMaterial.toLowerCase());
+
+            if (!match) {
+                applyMaterialPreviewState('warning', 'Warning: Insufficient stock. Current available: 0.');
+                return;
+            }
+
+            const available = Number(parseFloat(match[3]) || 0);
+            if (requestedQty > available) {
+                applyMaterialPreviewState('warning', `Warning: Insufficient stock. Current available: ${available}.`);
+                return;
+            }
+
+            applyMaterialPreviewState('success', 'Sufficient stock available.');
+        } catch (error) {
+            applyMaterialPreviewState('neutral', 'Unable to verify stock availability right now.');
+        }
+    }
+
+    if (materialInput) materialInput.addEventListener('input', checkMaterialAvailability);
+    if (materialQtyInput) materialQtyInput.addEventListener('input', checkMaterialAvailability);
+
     if (prodForm) {
         prodForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -719,6 +859,12 @@ if (window.location.pathname.includes('production.html')) {
 
             if (!product || !rmItem || !Number.isFinite(prodQty) || prodQty <= 0 || !Number.isFinite(rmQty) || rmQty <= 0) {
                 showErrorToast('Production validation failed: Product, raw material, and quantity are required.');
+                return;
+            }
+
+            if (materialPreviewPanel && materialPreviewPanel.dataset.state === 'warning') {
+                const currentAvailable = (document.getElementById('material-preview-panel').textContent.match(/Current available: (\d+(?:\.\d+)?)/i) || [null, '0'])[1];
+                showErrorToast(`Warning: Insufficient stock. Current available: ${currentAvailable}.`);
                 return;
             }
 
@@ -735,6 +881,7 @@ if (window.location.pathname.includes('production.html')) {
                 const result = await apiCall('/api/production', 'POST', payload);
                 if (result.success) {
                     prodForm.reset();
+                    applyMaterialPreviewState('neutral', 'Enter a raw material and quantity to preview stock availability.');
                     await loadProductionLedger();
                     showErrorToast('Production logged successfully.');
                 } else {
