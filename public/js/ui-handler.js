@@ -671,13 +671,67 @@ if (window.location.pathname.includes('supply.html')) {
                 return;
             }
 
+            const workflowStatusMap = {
+                'Pending': 'Draft',
+                'Draft': 'Draft',
+                'Sent': 'Sent',
+                'Dispatched / Delivered': 'Sent',
+                'Confirmed': 'Confirmed',
+                'Invoiced': 'Confirmed',
+                'Invoiced & Settled': 'Confirmed',
+                'Received': 'Received'
+            };
+
             data.slice().reverse().forEach((row) => {
                 const safeStatus = Array.isArray(row) && row[7] ? row[7] : '';
                 const safeType = Array.isArray(row) && row[2] ? row[2] : '';
                 const typeBadge = safeType.includes('Purchase') ? '<span class="badge-warning">PO</span>' : '<span class="badge-success">SO</span>';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0] || 'N/A'}</td><td style="color: #64748b;">${row[1] || 'N/A'}</td><td>${typeBadge}</td><td style="font-weight: 500;">${row[3] || 'N/A'}</td><td>${row[4] || 'N/A'}</td><td>${row[5] || 0}</td><td style="font-weight: bold;">₹${parseFloat(row[6] || 0).toLocaleString('en-IN')}</td><td>${renderStatusBadge(safeStatus)}</td>`;
+                const canonicalStatus = workflowStatusMap[safeStatus] || safeStatus;
+                const amountValue = `₹${parseFloat(row[6] || 0).toLocaleString('en-IN')}`;
+
+                tr.dataset.partner = row[3] || 'N/A';
+                tr.dataset.item = row[4] || 'N/A';
+                tr.dataset.amount = amountValue;
+                tr.dataset.status = canonicalStatus;
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0] || 'N/A'}</td><td style="color: #64748b;">${row[1] || 'N/A'}</td><td>${typeBadge}</td><td style="font-weight: 500;">${row[3] || 'N/A'}</td><td>${row[4] || 'N/A'}</td><td>${row[5] || 0}</td><td style="font-weight: bold;">${amountValue}</td><td>${renderStatusBadge(safeStatus)}</td>`;
                 tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('tr').forEach((tr) => {
+                tr.addEventListener('click', () => {
+                    const supplier = tr.dataset.partner || 'Supplier Name';
+                    const item = tr.dataset.item || '—';
+                    const amount = tr.dataset.amount || '₹0';
+                    const status = tr.dataset.status || 'Draft';
+                    const docId = tr.firstElementChild ? tr.firstElementChild.textContent.trim() : 'PRC-XXXX';
+                    const type = (tr.children[2] ? tr.children[2].textContent.trim() : '').replace(/\s+/g, ' ');
+                    const orderDate = tr.children[1] ? tr.children[1].textContent.trim() : 'N/A';
+                    const expectedDate = (() => {
+                        const base = new Date(orderDate);
+                        if (Number.isNaN(base.getTime())) return 'N/A';
+                        const expected = new Date(base);
+                        expected.setDate(expected.getDate() + 7);
+                        return expected.toISOString().split('T')[0];
+                    })();
+
+                    document.getElementById('detail-supplier-title').textContent = supplier;
+                    document.getElementById('detail-po-id').textContent = docId;
+                    document.getElementById('detail-box-supplier').textContent = supplier;
+                    document.getElementById('detail-box-category').textContent = type || '—';
+                    document.getElementById('detail-box-items').textContent = item;
+                    document.getElementById('detail-box-total').textContent = amount;
+                    document.getElementById('detail-box-order-date').textContent = orderDate;
+                    document.getElementById('detail-box-expected').textContent = expectedDate;
+
+                    document.querySelectorAll('.workflow-step').forEach((step) => {
+                        step.classList.toggle('active', step.dataset.status === status);
+                    });
+
+                    const detailModal = document.getElementById('modal-po-detail');
+                    if (detailModal) detailModal.style.display = 'flex';
+                });
             });
         } catch (error) {
             tbody.innerHTML = '<div class="empty-state">System offline. Please check your connection.</div>';
@@ -685,6 +739,37 @@ if (window.location.pathname.includes('supply.html')) {
         }
     }
     loadSupplyLedger();
+
+    const newPoModal = document.getElementById('modal-new-po');
+    const detailModal = document.getElementById('modal-po-detail');
+    const btnNewPO = document.getElementById('btn-new-po');
+    const closeNewPO = document.getElementById('close-new-po');
+    const closePoDetail = document.getElementById('close-po-detail');
+
+    if (btnNewPO && newPoModal) {
+        btnNewPO.addEventListener('click', () => {
+            newPoModal.style.display = 'flex';
+        });
+    }
+
+    if (closeNewPO && newPoModal) {
+        closeNewPO.addEventListener('click', () => {
+            newPoModal.style.display = 'none';
+        });
+    }
+
+    if (closePoDetail && detailModal) {
+        closePoDetail.addEventListener('click', () => {
+            detailModal.style.display = 'none';
+        });
+    }
+
+    [newPoModal, detailModal].forEach((modal) => {
+        if (!modal) return;
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) modal.style.display = 'none';
+        });
+    });
 
     const supplyForm = document.getElementById('supplyForm');
     if (supplyForm) {

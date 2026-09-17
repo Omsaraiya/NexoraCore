@@ -1,70 +1,49 @@
-const navGroups = [
+const navCategories = [
   {
-    label: "Overview", icon: "layout-dashboard",
-    items: [ { label: "Executive Dashboard", url: "dashboard.html" }, { label: "Task Manager", url: "tasks.html" } ]
+    title: 'OPERATIONS',
+    items: [
+      { label: 'Dashboard', url: 'dashboard.html' },
+      { label: 'Production', url: 'production.html' },
+      { label: 'Inventory', url: 'inventory.html' }
+    ]
   },
   {
-    label: "Supply & Inventory", icon: "boxes",
-    items: [ { label: "Supply Chain", url: "supply.html" }, { label: "Inventory Manager", url: "inventory.html" } ]
+    title: 'COMMERCE',
+    items: [
+      { label: 'Supply', url: 'supply.html' },
+      { label: 'Sales Orders', url: 'sales.html' }
+    ]
   },
   {
-    label: "Production & Quality", icon: "factory",
-    items: [ { label: "Production Logs", url: "production.html" }, { label: "Quality & Lab", url: "qc.html" } ]
-  },
-  {
-    label: "Financial Core", icon: "indian-rupee",
-    items: [ { label: "Finance Ledger", url: "finance.html" } ]
-  },
-  {
-    label: "Administration", icon: "settings",
-    items: [ { label: "HR & Access", url: "hr.html" }, { label: "System Settings", url: "settings.html" } ]
+    title: 'MANAGEMENT',
+    items: [
+      { label: 'Human Resources', url: 'hr.html' },
+      { label: 'Tasks / Reports', url: 'tasks.html' }
+    ]
   }
 ];
 
-function renderNavGroup(group, currentPath) {
-  const details = document.createElement('details');
-  details.className = 'nav-group';
+function renderNavCategory(category, currentPath) {
+  const wrapper = document.createElement('div');
+  const title = document.createElement('div');
+  title.className = 'nav-category';
+  title.textContent = category.title || '';
 
-  const groupLabel = group.label || group.group || '';
-  const groupIcon = group.icon || '';
-  const itemList = Array.isArray(group.items) ? group.items : [];
+  const list = document.createElement('div');
+  list.className = 'nav-links';
 
-  const isMatch = currentPath.includes((groupLabel || '').toLowerCase().replace(/[^a-z]/g, '')) || itemList.some((item) => currentPath.endsWith(item.url || item.to || '#'));
-
-  if (isMatch) {
-    details.open = true;
-  }
-
-  const summary = document.createElement('summary');
-  summary.innerHTML = `
-    <span class="nav-summary-label">
-      <i data-lucide="${(groupIcon || '').toLowerCase()}"></i>
-      <span>${groupLabel}</span>
-    </span>
-  `;
-
-  const navLinks = document.createElement('div');
-  navLinks.className = 'nav-links';
-
-  itemList.forEach((item) => {
+  (category.items || []).forEach((item) => {
     const anchor = document.createElement('a');
-    const itemUrl = item.url || item.to || '#';
-    const isActive = currentPath.endsWith(itemUrl) && itemUrl !== '#';
-    anchor.href = itemUrl === '#' ? '#' : itemUrl;
-    anchor.className = isActive ? 'active' : '';
+    const itemUrl = item.url || '#';
+    anchor.href = itemUrl;
+    anchor.className = 'nav-item' + (currentPath.endsWith(itemUrl) ? ' active' : '');
     anchor.textContent = item.label || 'Untitled';
-
-    if (itemUrl === '#') {
-      anchor.setAttribute('aria-disabled', 'true');
-      anchor.addEventListener('click', (event) => event.preventDefault());
-    }
-
-    navLinks.appendChild(anchor);
+    list.appendChild(anchor);
   });
 
-  details.appendChild(summary);
-  details.appendChild(navLinks);
-  return details;
+  wrapper.appendChild(title);
+  wrapper.appendChild(list);
+  return wrapper;
 }
 
 function initSidebar() {
@@ -72,14 +51,20 @@ function initSidebar() {
   if (!sidebar) return;
 
   const currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
-
-  navGroups.forEach((group) => {
-    sidebar.appendChild(renderNavGroup(group, currentPath));
+  navCategories.forEach((category) => {
+    sidebar.appendChild(renderNavCategory(category, currentPath));
   });
 
-  if (window.lucide && typeof window.lucide.createIcons === 'function') {
-    window.lucide.createIcons();
-  }
+  const profile = document.createElement('div');
+  profile.className = 'sidebar-profile';
+  profile.innerHTML = `
+    <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #10B981, #059669); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">OS</div>
+    <div>
+      <div style="font-size:13px; font-weight:600; color:#fff;">Om Saraiya</div>
+      <div style="font-size:11px; color:#94A3B8;">Plant Manager</div>
+    </div>
+  `;
+  sidebar.appendChild(profile);
 
   const activeLink = sidebar.querySelector('a.active');
   if (activeLink) {
