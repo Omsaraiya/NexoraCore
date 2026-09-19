@@ -11,31 +11,15 @@
 </head>
 
 <body>
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="brand">
-                <h2>NexoraCore</h2>
-            </div>
-            <nav id="dynamic-sidebar" class="side-nav"></nav>
-            <div class="logout-section">
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </div>
-        </aside>
-
-        <div class="main-wrapper">
-            <header class="top-nav">
-    <h2 class="topbar-brand">Command Center</h2>
-    <div class="topbar-tools">
-        <input id="global-search" name="global-search" class="topbar-search" type="search" placeholder="Search ERP records...">
-        <select id="plant-switcher" name="plant-switcher" class="plant-switcher">
-            <option>Unit I</option><option>Unit II</option><option>Unit III</option>
-        </select>
-        <span class="fy-chip">FY 2026-27</span>
-        <div class="profile-chip user-info">Welcome, Rahul Sharma</div>
-    </div>
-</header>
-
-            <main class="content-area">
+    <div class="app-shell">
+        <div id="sidebar-container"></div>
+        <div class="main-wrap">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1 class="topbar-title" style="margin:0;">Command Center</h1>
+                </div>
+            </header>
+            <main class="content-area" style="padding: 24px;">
                 <section class="page-header">
                     <div class="page-header-copy">
                         <div class="breadcrumb">SUPPLY & INVENTORY / SUPPLY CHAIN</div>
@@ -81,86 +65,86 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
 
-            <div id="modal-new-po" class="glass-modal-overlay" style="display:none;">
-                <div class="smart-modal">
-                    <h3 class="mt-0" style="margin-bottom: 8px;">Create Purchase Order</h3>
-                    <p class="text-muted" style="margin-top: 0;">Record material purchases or client sales.</p>
+    <div id="modal-new-po" class="glass-modal-overlay" style="display:none;">
+        <div class="smart-modal">
+            <h3 class="mt-0" style="margin-bottom: 8px;">Create Purchase Order</h3>
+            <p class="text-muted" style="margin-top: 0;">Record material purchases or client sales.</p>
 
-                    <form id="supplyForm">
-                        <div class="grid-2-col" style="margin-bottom: 0;">
-                            <div class="input-group">
-                                <label for="supplyType">Pipeline Stage</label>
-                                <select id="supplyType" required>
-                                    <option value="Purchase Order (Procure-to-Pay)">Purchase Order (Procure-to-Pay)
-                                    </option>
-                                    <option value="Sales Order (Order-to-Cash)">Sales Order (Order-to-Cash)</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="supplyPartner">Client / Supplier Name</label>
-                                <input type="text" id="supplyPartner" placeholder="e.g. Voltas, Havells..."
-                                    required>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="supplyItem">Item / Material Name</label>
-                            <input type="text" id="supplyItem" placeholder="e.g. Thermal Overload Protector"
-                                required>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-                            <div class="input-group">
-                                <label for="supplyQty">Quantity</label>
-                                <input type="number" id="supplyQty" min="1" placeholder="e.g. 500" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="supplyValue">Total Value (₹)</label>
-                                <input type="number" id="supplyValue" min="0" placeholder="e.g. 25000" required>
-                            </div>
-                            <div class="input-group">
-                                <label for="supplyStatus">Order Status</label>
-                                <select id="supplyStatus" required>
-                                    <option value="Pending">Pending / Draft</option>
-                                    <option value="Dispatched / Delivered">Dispatched / Delivered</option>
-                                    <option value="Invoiced">Invoiced & Settled</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; gap:12px; margin-top: 12px;">
-                            <button type="button" id="close-new-po" class="btn">Cancel</button>
-                            <button type="submit" id="supplyBtn" class="btn-primary" style="width: auto; min-width: 180px;">Process Order</button>
-                        </div>
-                    </form>
+            <form id="supplyForm">
+                <div class="grid-2-col" style="margin-bottom: 0;">
+                    <div class="input-group">
+                        <label for="supplyType">Pipeline Stage</label>
+                        <select id="supplyType" required>
+                            <option value="Purchase Order (Procure-to-Pay)">Purchase Order (Procure-to-Pay)
+                            </option>
+                            <option value="Sales Order (Order-to-Cash)">Sales Order (Order-to-Cash)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="supplyPartner">Client / Supplier Name</label>
+                        <input type="text" id="supplyPartner" placeholder="e.g. Voltas, Havells..."
+                            required>
+                    </div>
                 </div>
+
+                <div class="input-group">
+                    <label for="supplyItem">Item / Material Name</label>
+                    <input type="text" id="supplyItem" placeholder="e.g. Thermal Overload Protector"
+                        required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div class="input-group">
+                        <label for="supplyQty">Quantity</label>
+                        <input type="number" id="supplyQty" min="1" placeholder="e.g. 500" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="supplyValue">Total Value (₹)</label>
+                        <input type="number" id="supplyValue" min="0" placeholder="e.g. 25000" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="supplyStatus">Order Status</label>
+                        <select id="supplyStatus" required>
+                            <option value="Pending">Pending / Draft</option>
+                            <option value="Dispatched / Delivered">Dispatched / Delivered</option>
+                            <option value="Invoiced">Invoiced & Settled</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:12px; margin-top: 12px;">
+                    <button type="button" id="close-new-po" class="btn">Cancel</button>
+                    <button type="submit" id="supplyBtn" class="btn-primary" style="width: auto; min-width: 180px;">Process Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-po-detail" class="glass-modal-overlay" style="display:none;">
+        <div class="smart-modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
+                <div>
+                    <h3 id="detail-supplier-title" style="margin:0;">Supplier Name</h3>
+                    <div id="detail-po-id" class="modal-subtitle">PRC-XXXX</div>
+                </div>
+                <button id="close-po-detail" style="border:none; background:none; cursor:pointer; font-size: 1.1rem; color: #475569;">X</button>
             </div>
-
-            <div id="modal-po-detail" class="glass-modal-overlay" style="display:none;">
-                <div class="smart-modal">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:20px; align-items:center;">
-                        <div>
-                            <h3 id="detail-supplier-title" style="margin:0;">Supplier Name</h3>
-                            <div id="detail-po-id" class="modal-subtitle">PRC-XXXX</div>
-                        </div>
-                        <button id="close-po-detail" style="border:none; background:none; cursor:pointer; font-size: 1.1rem; color: #475569;">X</button>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-box"><span class="detail-label">Supplier</span><span id="detail-box-supplier" class="detail-value">-</span></div>
-                        <div class="detail-box"><span class="detail-label">Category</span><span id="detail-box-category" class="detail-value">-</span></div>
-                        <div class="detail-box"><span class="detail-label">Items</span><span id="detail-box-items" class="detail-value">-</span></div>
-                        <div class="detail-box"><span class="detail-label">Total Amount</span><span id="detail-box-total" class="detail-value">-</span></div>
-                        <div class="detail-box"><span class="detail-label">Order Date</span><span id="detail-box-order-date" class="detail-value">-</span></div>
-                        <div class="detail-box"><span class="detail-label">Expected</span><span id="detail-box-expected" class="detail-value">-</span></div>
-                    </div>
-                    <label style="font-size:0.75rem; color:#64748b; margin-bottom:10px; display:block;">WORKFLOW - UPDATE STATUS</label>
-                    <div class="workflow-bar">
-                        <span class="workflow-step" data-status="Draft">Draft</span>
-                        <span class="workflow-step" data-status="Sent">Sent</span>
-                        <span class="workflow-step" data-status="Confirmed">Confirmed</span>
-                        <span class="workflow-step" data-status="Received">Received</span>
-                    </div>
-                </div>
+            <div class="detail-grid">
+                <div class="detail-box"><span class="detail-label">Supplier</span><span id="detail-box-supplier" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Category</span><span id="detail-box-category" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Items</span><span id="detail-box-items" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Total Amount</span><span id="detail-box-total" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Order Date</span><span id="detail-box-order-date" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Expected</span><span id="detail-box-expected" class="detail-value">-</span></div>
+            </div>
+            <label style="font-size:0.75rem; color:#64748b; margin-bottom:10px; display:block;">WORKFLOW - UPDATE STATUS</label>
+            <div class="workflow-bar">
+                <span class="workflow-step" data-status="Draft">Draft</span>
+                <span class="workflow-step" data-status="Sent">Sent</span>
+                <span class="workflow-step" data-status="Confirmed">Confirmed</span>
+                <span class="workflow-step" data-status="Received">Received</span>
             </div>
         </div>
     </div>

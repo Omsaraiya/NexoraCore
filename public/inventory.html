@@ -11,31 +11,15 @@
 </head>
 
 <body>
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="brand">
-                <h2>NexoraCore</h2>
-            </div>
-            <nav id="dynamic-sidebar" class="side-nav"></nav>
-            <div class="logout-section">
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </div>
-        </aside>
-
-        <div class="main-wrapper">
+    <div class="app-shell">
+        <div id="sidebar-container"></div>
+        <div class="main-wrap">
             <header class="topbar">
-    <h2 class="topbar-brand">Command Center</h2>
-    <div class="topbar-tools">
-        <input id="global-search" name="global-search" class="topbar-search" type="search" placeholder="Search ERP records...">
-        <select id="plant-switcher" name="plant-switcher" class="plant-switcher">
-            <option>Unit I</option><option>Unit II</option><option>Unit III</option>
-        </select>
-        <span class="fy-chip">FY 2026-27</span>
-        <div class="profile-chip user-info">Welcome, Rahul Sharma</div>
-    </div>
-</header>
-
-            <main class="content-area">
+                <div class="topbar-left">
+                    <h1 class="topbar-title" style="margin:0;">Command Center</h1>
+                </div>
+            </header>
+            <main class="content-area" style="padding: 24px;">
                 <section class="page-header">
                     <div class="page-header-copy">
                         <div class="breadcrumb">SUPPLY & INVENTORY / INVENTORY MANAGER</div>
