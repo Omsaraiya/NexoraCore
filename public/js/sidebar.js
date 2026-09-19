@@ -11,7 +11,7 @@ const navCategories = [
     title: 'COMMERCE',
     items: [
       { label: 'Supply', url: 'supply.html' },
-      { label: 'Sales Orders', url: 'sales.html' }
+      { label: 'Financial Core', url: '/finance.html' }
     ]
   },
   {
@@ -35,8 +35,11 @@ function renderNavCategory(category, currentPath) {
   (category.items || []).forEach((item) => {
     const anchor = document.createElement('a');
     const itemUrl = item.url || '#';
+    const normalizedCurrent = currentPath.replace(/^\/+/, '');
+    const normalizedItemUrl = itemUrl.replace(/^\/+/, '');
+    const isActive = normalizedCurrent === normalizedItemUrl || currentPath.endsWith(itemUrl) || (item.label === 'Financial Core' && normalizedCurrent === 'finance.html');
     anchor.href = itemUrl;
-    anchor.className = 'nav-item' + (currentPath.endsWith(itemUrl) ? ' active' : '');
+    anchor.className = 'nav-item' + (isActive ? ' active' : '');
     anchor.textContent = item.label || 'Untitled';
     list.appendChild(anchor);
   });

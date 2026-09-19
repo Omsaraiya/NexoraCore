@@ -42,51 +42,29 @@
                         <h1>Shop Floor MES</h1>
                     </div>
                 </section>
-                <div class="grid-2-col">
-                    <div class="panel-card p-20">
+
+                <div style="width:100%; display:block;">
+                    <div class="panel-card p-20" style="width:100%; margin-bottom:20px;">
                         <h3 class="mt-0">Shop Floor MES</h3>
                         <p class="text-muted">Log completed batches to update live inventory.</p>
-
-                        <form id="productionForm">
-                            <div class="grid-2-col" style="margin-bottom: 0;">
-                                <div class="input-group">
-                                    <label>Finished Product Name</label>
-                                    <input type="text" id="prodItem" placeholder="e.g. Thermal Overload Protector"
-                                        required>
-                                </div>
-                                <div class="input-group">
-                                    <label>Quantity Produced</label>
-                                    <input type="number" id="prodQty" min="1" required>
-                                </div>
-                            </div>
-
-                            <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 15px 0;">
-
-                            <div class="grid-2-col" style="margin-bottom: 0;">
-                                <div class="input-group">
-                                    <label>Raw Material Consumed</label>
-                                    <input type="text" id="rmItem" placeholder="e.g. Silver Contacts" required>
-                                </div>
-                                <div class="input-group">
-                                    <label>RM Quantity Used</label>
-                                    <input type="number" id="rmQty" min="1" required>
-                                    <div id="material-preview-panel" class="preview-panel" aria-live="polite"></div>
-                                </div>
-                            </div>
-                            <button type="submit" id="prodBtn" class="btn-primary" style="margin-top: 10px;">Log
-                                Production Run</button>
-                        </form>
                     </div>
 
-                    <div class="panel-card p-20">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="panel-card p-20" style="width:100%;">
+                        <div class="module-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <div class="pill-tabs" style="display:flex; background:#f1f5f9; border-radius:20px; padding:4px;">
+                                <button class="pill-btn active" style="border:none; padding:6px 16px; border-radius:16px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.05); font-weight:600;">All</button>
+                                <button class="pill-btn" style="border:none; background:transparent; padding:6px 16px; color:#64748b;">Completed</button>
+                                <button class="pill-btn" style="border:none; background:transparent; padding:6px 16px; color:#64748b;">In Progress</button>
+                            </div>
+                            <button id="btn-new-production" class="btn btn-primary">+ New Order</button>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h3 class="mt-0" style="margin-bottom: 0;">Production Ledger</h3>
                             <button onclick="exportTableToCSV('production_ledger.csv')" class="btn-secondary"
                                 style="width: auto; padding: 6px 12px; font-size: 11px;">📥 Export CSV</button>
                         </div>
-                        <div class="erp-scroll">
-                            <table class="data-table erp-table">
+                        <div class="erp-scroll" style="width:100%;">
+                            <table class="data-table erp-table" style="width:100%;">
                                 <thead>
                                     <tr>
                                         <th class="label-caps">PRD ID</th>
@@ -106,6 +84,61 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <div id="modal-add-production" class="glass-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div class="smart-modal" style="background:#fff; border-radius:16px; padding:24px; max-width:600px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+            <form id="productionForm">
+                <div class="grid-2-col" style="margin-bottom: 0;">
+                    <div class="input-group">
+                        <label for="prodItem">Finished Product Name</label>
+                        <input type="text" id="prodItem" placeholder="e.g. Thermal Overload Protector" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="prodQty">Quantity Produced</label>
+                        <input type="number" id="prodQty" min="1" required>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 15px 0;">
+
+                <div class="grid-2-col" style="margin-bottom: 0;">
+                    <div class="input-group">
+                        <label for="rmItem">Raw Material Consumed</label>
+                        <input type="text" id="rmItem" placeholder="e.g. Silver Contacts" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rmQty">RM Quantity Used</label>
+                        <input type="number" id="rmQty" min="1" required>
+                        <div id="material-preview-panel" class="preview-panel" aria-live="polite"></div>
+                    </div>
+                </div>
+                <button type="submit" id="prodBtn" class="btn-primary" style="margin-top: 10px;">Log Production Run</button>
+            </form>
+            <button type="button" id="close-add-production" class="btn" style="margin-top:10px;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modal-production-detail" class="glass-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div class="smart-modal" style="background:#fff; border-radius:16px; padding:24px; max-width:600px; width:100%;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <div>
+                    <h3 id="detail-prd-title" style="margin:0; font-size:1.2rem; color:#0f172a;">Product Name</h3>
+                    <div id="detail-prd-id" style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">PRD-XXXX</div>
+                </div>
+                <button id="close-production-detail" style="border:none; background:none; font-size:1.2rem; cursor:pointer; color:#94a3b8;">×</button>
+            </div>
+            <div class="detail-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+                <div class="detail-box"><span class="detail-label">Quantity</span><span id="detail-box-qty" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Date Logged</span><span id="detail-box-date" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Raw Material Used</span><span id="detail-box-rm" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Status</span><span id="detail-box-status" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Line Operator</span><span id="detail-box-operator" class="detail-value">Om Saraiya</span></div>
+                <div class="detail-box"><span class="detail-label">Quality Check</span><span id="detail-box-qc" class="detail-value">Pending</span></div>
+            </div>
+            <label style="font-size:0.75rem; color:#64748b; margin-bottom:10px; display:block; font-weight:700; text-transform:uppercase;">Workflow Status</label>
+            <div style="display:flex; gap:10px; border-top:1px solid #e2e8f0; padding-top:16px;"><span style="padding:6px 12px; border-radius:8px; background:#eff6ff; color:#2563eb; font-size:0.85rem; font-weight:600;">Planned</span><span style="padding:6px 12px; border-radius:8px; background:#f1f5f9; color:#64748b; font-size:0.85rem;">In Progress</span><span style="padding:6px 12px; border-radius:8px; background:#f1f5f9; color:#64748b; font-size:0.85rem;">Completed</span></div>
         </div>
     </div>
 

@@ -88,9 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // HR & PROVISIONING
 // ==========================================
 if (window.location.pathname.includes('hr.html')) {
-    const addModal = document.getElementById('addEmployeeModal');
-    const openBtn = document.getElementById('openAddEmployeeModal');
-    const closeBtn = document.getElementById('closeModalBtn');
+    const addModal = document.getElementById('modal-hr-actions');
+    const openBtn = document.getElementById('btn-new-employee');
+    const legacyOpenBtn = document.getElementById('openAddEmployeeModal');
+    const closeBtn = document.getElementById('close-hr-actions');
+    const legacyCloseBtn = document.getElementById('closeModalBtn');
+    const employeeDetailModal = document.getElementById('modal-employee-detail');
+    const closeEmployeeDetail = document.getElementById('close-employee-detail');
 
     function renderEmployeeStatusBadge(status) {
         const normalizedStatus = String(status || '').trim();
@@ -100,15 +104,32 @@ if (window.location.pathname.includes('hr.html')) {
         return '<span class="badge-active">Active</span>';
     }
 
-    if (openBtn && closeBtn && addModal) {
-        openBtn.addEventListener('click', () => addModal.classList.add('active'));
-        closeBtn.addEventListener('click', () => {
-            addModal.classList.remove('active');
-            const credentialsDisplay = document.getElementById('newCredentialsDisplay');
-            if (credentialsDisplay) credentialsDisplay.style.display = 'none';
-        });
+    const openAddEmployeeModal = () => {
+        if (addModal) addModal.style.display = 'flex';
+    };
+    const closeAddEmployeeModal = () => {
+        if (addModal) addModal.style.display = 'none';
+        const credentialsDisplay = document.getElementById('newCredentialsDisplay');
+        if (credentialsDisplay) credentialsDisplay.style.display = 'none';
+    };
+
+    if (openBtn) openBtn.addEventListener('click', openAddEmployeeModal);
+    if (legacyOpenBtn) legacyOpenBtn.addEventListener('click', openAddEmployeeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeAddEmployeeModal);
+    if (legacyCloseBtn) legacyCloseBtn.addEventListener('click', closeAddEmployeeModal);
+    if (addModal) {
         addModal.addEventListener('click', (e) => {
-            if (e.target === addModal) addModal.classList.remove('active');
+            if (e.target === addModal) closeAddEmployeeModal();
+        });
+    }
+    if (closeEmployeeDetail && employeeDetailModal) {
+        closeEmployeeDetail.addEventListener('click', () => {
+            employeeDetailModal.style.display = 'none';
+        });
+    }
+    if (employeeDetailModal) {
+        employeeDetailModal.addEventListener('click', (e) => {
+            if (e.target === employeeDetailModal) employeeDetailModal.style.display = 'none';
         });
     }
 
@@ -142,7 +163,35 @@ if (window.location.pathname.includes('hr.html')) {
                 const roleName = row[2] || 'Unassigned';
                 const permissions = getRolePermissions(roleName).map((permission) => `<span class="micro-badge">${permission}</span>`).join('');
                 const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.dataset.name = row[1] || 'N/A';
+                tr.dataset.id = row[0] || 'N/A';
+                tr.dataset.role = roleName;
+                tr.dataset.status = row[4] || 'Active';
                 tr.innerHTML = `<td style="font-weight:bold; color:#072a4f;">${row[0] || 'N/A'}</td><td>${row[1] || 'N/A'}</td><td><div>${roleName}</div><div class="micro-badge-group">${permissions}</div></td><td>${statusBadge}</td>`;
+                tr.addEventListener('click', () => {
+                    const detailName = document.getElementById('detail-emp-name');
+                    const detailId = document.getElementById('detail-emp-id');
+                    const detailRole = document.getElementById('detail-box-role');
+                    const detailStatus = document.getElementById('detail-box-status');
+                    const badgeContainer = document.getElementById('detail-rbac-container');
+                    if (!employeeDetailModal || !detailName || !detailId || !detailRole || !detailStatus || !badgeContainer) return;
+
+                    detailName.textContent = tr.dataset.name || 'Employee Name';
+                    detailId.textContent = tr.dataset.id || 'EMP-XXXX';
+                    detailRole.textContent = tr.dataset.role || '-';
+                    detailStatus.textContent = tr.dataset.status || 'Active';
+                    badgeContainer.innerHTML = '';
+                    const clonedBadges = Array.from(tr.querySelectorAll('.micro-badge')).map((badge) => badge.cloneNode(true));
+                    clonedBadges.forEach((badge) => badgeContainer.appendChild(badge));
+                    if (!clonedBadges.length) {
+                        const fallbackBadge = document.createElement('span');
+                        fallbackBadge.className = 'micro-badge';
+                        fallbackBadge.textContent = 'HR';
+                        badgeContainer.appendChild(fallbackBadge);
+                    }
+                    employeeDetailModal.style.display = 'flex';
+                });
                 tbody.appendChild(tr);
             });
         } catch (error) {
@@ -379,9 +428,13 @@ if (window.location.pathname.includes('tasks.html')) {
 
             (data || []).forEach((row, index) => {
                 const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
                 const taskStatus = String(row[2] || '').trim() || 'Pending';
                 const qaStatus = row[5] || '';
                 const dueDate = row[3] || '';
+                const assignee = row[0] || 'N/A';
+                const taskDescription = row[1] || 'N/A';
+                const actionText = taskStatus === 'Pending' ? 'Awaiting completion' : (qaStatus ? `QA: ${qaStatus}` : 'Completed');
                 let dueDateClass = '';
 
                 if (taskStatus !== 'Completed' && dueDate) {
@@ -397,7 +450,29 @@ if (window.location.pathname.includes('tasks.html')) {
                 let actionHtml = taskStatus === 'Pending'
                     ? `<button onclick="completeTask(${index})" class="btn-primary" style="padding: 5px 10px; font-size: 12px;">✔ Mark Done</button>`
                     : (taskStatus === 'Completed' && qaStatus === '' ? `<button onclick="submitQA(${index}, 'Pass')" style="background: #3b82f6; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Pass</button> <button onclick="submitQA(${index}, 'Fail')" style="background: #dc2626; color: white; border: none; padding: 5px; cursor: pointer; border-radius:4px;">Fail</button>` : `<span style="color: ${qaStatus === 'Pass' ? '#16a34a' : '#dc2626'}; font-size: 13px; font-weight: bold;">QA: ${qaStatus}</span>`);
-                tr.innerHTML = `<td><strong>${row[0] || 'N/A'}</strong></td><td>${row[1] || 'N/A'}</td><td><span class="${dueDateClass}">${dueDate || 'N/A'}</span></td><td>${renderTaskStatusBadge(taskStatus)}</td><td>${actionHtml}</td>`;
+                tr.dataset.assignee = assignee;
+                tr.dataset.task = taskDescription;
+                tr.dataset.date = dueDate;
+                tr.dataset.status = taskStatus;
+                tr.dataset.action = actionText;
+                tr.innerHTML = `<td><strong>${assignee}</strong></td><td>${taskDescription}</td><td><span class="${dueDateClass}">${dueDate || 'N/A'}</span></td><td>${renderTaskStatusBadge(taskStatus)}</td><td>${actionHtml}</td>`;
+                tr.addEventListener('click', (event) => {
+                    if (event.target.closest('button')) return;
+                    const taskDetailModal = document.getElementById('modal-task-detail');
+                    const detailTaskDesc = document.getElementById('detail-task-desc');
+                    const detailBoxAssignee = document.getElementById('detail-box-assignee');
+                    const detailBoxDate = document.getElementById('detail-box-tdate');
+                    const detailBoxStatus = document.getElementById('detail-box-tstatus');
+                    const detailBoxAction = document.getElementById('detail-box-taction');
+                    if (!taskDetailModal || !detailTaskDesc || !detailBoxAssignee || !detailBoxDate || !detailBoxStatus || !detailBoxAction) return;
+
+                    detailTaskDesc.textContent = tr.dataset.task || 'Task Description';
+                    detailBoxAssignee.textContent = tr.dataset.assignee || '-';
+                    detailBoxDate.textContent = tr.dataset.date || '-';
+                    detailBoxStatus.textContent = tr.dataset.status || '-';
+                    detailBoxAction.textContent = tr.dataset.action || '-';
+                    taskDetailModal.style.display = 'flex';
+                });
                 tbody.appendChild(tr);
             });
         } catch (error) {
@@ -406,6 +481,38 @@ if (window.location.pathname.includes('tasks.html')) {
         }
     }
     loadManagementTable();
+
+    const taskModal = document.getElementById('modal-add-task');
+    const openTaskModalBtn = document.getElementById('btn-new-task');
+    const closeTaskModalBtn = document.getElementById('close-add-task');
+    const taskDetailModal = document.getElementById('modal-task-detail');
+    const closeTaskDetailBtn = document.getElementById('close-task-detail');
+
+    if (openTaskModalBtn && taskModal) {
+        openTaskModalBtn.addEventListener('click', () => {
+            taskModal.style.display = 'flex';
+        });
+    }
+    if (closeTaskModalBtn && taskModal) {
+        closeTaskModalBtn.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+    }
+    if (taskModal) {
+        taskModal.addEventListener('click', (event) => {
+            if (event.target === taskModal) taskModal.style.display = 'none';
+        });
+    }
+    if (closeTaskDetailBtn && taskDetailModal) {
+        closeTaskDetailBtn.addEventListener('click', () => {
+            taskDetailModal.style.display = 'none';
+        });
+    }
+    if (taskDetailModal) {
+        taskDetailModal.addEventListener('click', (event) => {
+            if (event.target === taskDetailModal) taskDetailModal.style.display = 'none';
+        });
+    }
 
     const taskForm = document.getElementById('taskForm');
     if (taskForm) {
@@ -545,7 +652,31 @@ if (window.location.pathname.includes('finance.html')) {
                 if (normalizedType === 'Expense') totalExp += amt;
 
                 const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.dataset.txnId = row[0] || 'TXN-XXXX';
+                tr.dataset.txnDate = row[1] || '-';
+                tr.dataset.txnType = normalizedType;
+                tr.dataset.txnCategory = row[3] || '-';
+                tr.dataset.txnAmount = amt;
                 tr.innerHTML = `<td style="color: #64748b;">${row[1] || '-'}</td><td style="font-weight: bold; color: #072a4f;">${row[0] || '-'}</td><td><span class="${normalizedType === 'Income' ? 'badge-income' : 'badge-expense'}">${normalizedType.toUpperCase()}</span></td><td>${row[3] || '-'}</td><td style="font-weight: bold; color: ${normalizedType === 'Income' ? '#16a34a' : '#dc2626'};">₹${amt.toLocaleString('en-IN')}</td>`;
+                tr.addEventListener('click', () => {
+                    const detailModal = document.getElementById('modal-txn-detail');
+                    if (!detailModal) return;
+
+                    const idEl = document.getElementById('detail-txn-id');
+                    const dateEl = document.getElementById('detail-box-txn-date');
+                    const typeEl = document.getElementById('detail-box-txn-type');
+                    const catEl = document.getElementById('detail-box-txn-cat');
+                    const amtEl = document.getElementById('detail-box-txn-amt');
+
+                    if (idEl) idEl.textContent = tr.dataset.txnId || 'TXN-XXXX';
+                    if (dateEl) dateEl.textContent = tr.dataset.txnDate || '-';
+                    if (typeEl) typeEl.textContent = tr.dataset.txnType || '-';
+                    if (catEl) catEl.textContent = tr.dataset.txnCategory || '-';
+                    if (amtEl) amtEl.textContent = `₹${Number(tr.dataset.txnAmount || 0).toLocaleString('en-IN')}`;
+
+                    detailModal.style.display = 'flex';
+                });
                 tbody.appendChild(tr);
             });
 
@@ -606,6 +737,30 @@ if (window.location.pathname.includes('finance.html')) {
         }
     }
     loadFinanceLedger();
+
+    const btnNewTxn = document.getElementById('btn-new-txn');
+    const modalAddTxn = document.getElementById('modal-add-txn');
+    const closeAddTxn = document.getElementById('close-add-txn');
+    const closeTxnDetail = document.getElementById('close-txn-detail');
+    const modalTxnDetail = document.getElementById('modal-txn-detail');
+
+    if (btnNewTxn && modalAddTxn) {
+        btnNewTxn.addEventListener('click', () => {
+            modalAddTxn.style.display = 'flex';
+        });
+    }
+
+    if (closeAddTxn && modalAddTxn) {
+        closeAddTxn.addEventListener('click', () => {
+            modalAddTxn.style.display = 'none';
+        });
+    }
+
+    if (closeTxnDetail && modalTxnDetail) {
+        closeTxnDetail.addEventListener('click', () => {
+            modalTxnDetail.style.display = 'none';
+        });
+    }
 
     const financeForm = document.getElementById('financeForm');
     if (financeForm) {
@@ -863,7 +1018,32 @@ if (window.location.pathname.includes('production.html')) {
             (result.data || []).slice().reverse().forEach((row) => {
                 const status = row[5] || 'Completed';
                 const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
                 tr.innerHTML = `<td style="font-weight: bold; color: #072a4f;">${row[0] || 'N/A'}</td><td style="color: #64748b;">${row[1] || 'N/A'}</td><td>${row[2] || 'N/A'}</td><td style="font-weight: bold;">${row[3] || 0}</td><td>${renderProductionStatusBadge(status)}</td>`;
+                tr.addEventListener('click', () => {
+                    const detailModal = document.getElementById('modal-production-detail');
+                    if (!detailModal) return;
+
+                    const titleEl = document.getElementById('detail-prd-title');
+                    const idEl = document.getElementById('detail-prd-id');
+                    const qtyEl = document.getElementById('detail-box-qty');
+                    const dateEl = document.getElementById('detail-box-date');
+                    const rmEl = document.getElementById('detail-box-rm');
+                    const statusEl = document.getElementById('detail-box-status');
+                    const operatorEl = document.getElementById('detail-box-operator');
+                    const qcEl = document.getElementById('detail-box-qc');
+
+                    if (titleEl) titleEl.textContent = row[2] || 'Product Name';
+                    if (idEl) idEl.textContent = row[0] || 'PRD-XXXX';
+                    if (qtyEl) qtyEl.textContent = row[3] || '0';
+                    if (dateEl) dateEl.textContent = row[1] || 'N/A';
+                    if (statusEl) statusEl.textContent = status || 'Completed';
+                    if (rmEl) rmEl.textContent = row[4] ? `Batch ${row[0] || 'N/A'} material` : 'Not captured';
+                    if (operatorEl) operatorEl.textContent = row[4] || 'Om Saraiya';
+                    if (qcEl) qcEl.textContent = status && status.toLowerCase().includes('completed') ? 'Passed' : 'Pending';
+
+                    detailModal.style.display = 'flex';
+                });
                 tbody.appendChild(tr);
             });
         } catch (error) {
@@ -872,6 +1052,30 @@ if (window.location.pathname.includes('production.html')) {
         }
     }
     loadProductionLedger();
+
+    const addProductionModal = document.getElementById('modal-add-production');
+    const btnNewProduction = document.getElementById('btn-new-production');
+    const closeAddProduction = document.getElementById('close-add-production');
+    const closeProductionDetail = document.getElementById('close-production-detail');
+    const productionDetailModal = document.getElementById('modal-production-detail');
+
+    if (btnNewProduction && addProductionModal) {
+        btnNewProduction.addEventListener('click', () => {
+            addProductionModal.style.display = 'flex';
+        });
+    }
+
+    if (closeAddProduction && addProductionModal) {
+        closeAddProduction.addEventListener('click', () => {
+            addProductionModal.style.display = 'none';
+        });
+    }
+
+    if (closeProductionDetail && productionDetailModal) {
+        closeProductionDetail.addEventListener('click', () => {
+            productionDetailModal.style.display = 'none';
+        });
+    }
 
     const prodForm = document.getElementById('productionForm');
     const materialPreviewPanel = document.getElementById('material-preview-panel');

@@ -42,6 +42,15 @@
                         <h1>Human Resources</h1>
                     </div>
                 </section>
+                <div class="module-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <div class="pill-tabs" style="display:flex; background:#f1f5f9; border-radius:20px; padding:4px;">
+                        <button class="pill-btn active" style="border:none; padding:6px 16px; border-radius:16px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.05); font-weight:600;">All Employees</button>
+                        <button class="pill-btn" style="border:none; background:transparent; padding:6px 16px; color:#64748b;">Active</button>
+                        <button class="pill-btn" style="border:none; background:transparent; padding:6px 16px; color:#64748b;">On Leave</button>
+                    </div>
+                    <button id="btn-new-employee" class="btn btn-primary" style="width: fit-content; white-space: nowrap;">+ Add Employee</button>
+                </div>
+
                 <div class="panel-card p-20" style="margin-bottom: 25px;">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -52,8 +61,6 @@
                         <div>
                             <button onclick="exportTableToCSV('hr_directory.csv')" class="btn-secondary"
                                 style="width: auto; padding: 10px 20px; margin-right: 10px;">📥 Export CSV</button>
-                            <button id="openAddEmployeeModal" class="btn-primary"
-                                style="width: auto; padding: 10px 20px;">+ Add Employee</button>
                         </div>
                     </div>
 
@@ -76,36 +83,15 @@
                     </div>
                 </div>
 
-                <div class="panel-card p-20">
-                    <h3 class="mt-0" style="margin-bottom: 5px;">Daily Operations</h3>
-                    <p class="text-muted" style="margin-bottom: 20px;">Shop-floor time tracking and automated wage
-                        disbursement.</p>
 
-                    <div class="grid-2-col" style="margin: 0; gap: 30px;">
-                        <div>
-                            <label style="font-size: 11px; font-weight: bold; color: #475569;">MANUAL CLOCK-IN</label>
-                            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                                <input type="text" id="attEmpId" placeholder="EMP-XXXX"
-                                    style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
-                                <button id="clockInBtn" class="btn-secondary" style="width: auto;">Log Shift</button>
-                            </div>
-                        </div>
-                        <div>
-                            <label style="font-size: 11px; font-weight: bold; color: #475569;">PROCESS SALARY</label>
-                            <div style="display: flex; gap: 10px; margin-top: 5px;">
-                                <input type="text" id="payrollEmpId" placeholder="EMP-XXXX"
-                                    style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
-                                <button id="runPayrollBtn" class="btn-primary"
-                                    style="width: auto; background-color: #16a34a;">Run Payroll</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </main>
+        </div>
+    </div>
 
-            <div id="addEmployeeModal" class="modal-overlay">
-                <div class="modal-content">
-                    <button id="closeModalBtn" class="modal-close">✖</button>
+    <div id="modal-hr-actions" class="glass-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div class="smart-modal" style="background:#fff; border-radius:16px; padding:24px; max-width:600px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+            <div id="addEmployeeModal" class="modal-overlay" style="position: static; inset: auto; background: transparent; display:block;">
+                <div class="modal-content" style="box-shadow:none; border:none; background:transparent; max-width:none; padding:0;">
                     <h3 class="mt-0">Provision New Employee</h3>
                     <p class="text-muted">System will auto-generate ID and Passkey.</p>
 
@@ -126,23 +112,64 @@
                             <label for="empDepartment">Department</label>
                             <input type="text" id="empDepartment" placeholder="e.g. Operations / Finance / Quality" required>
                         </div>
-                        <button type="submit" id="hrSubmitBtn" class="btn-primary" style="margin-top: 10px;">Generate
-                            Credentials</button>
+                        <button type="submit" id="hrSubmitBtn" class="btn-primary" style="margin-top: 10px;">Generate Credentials</button>
                     </form>
 
                     <div id="newCredentialsDisplay"
                         style="display: none; margin-top: 20px; padding: 15px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
-                        <p style="margin: 0 0 10px 0; font-size: 13px; color: #166534; font-weight: bold;">✔
-                            Provisioning Successful</p>
+                        <p style="margin: 0 0 10px 0; font-size: 13px; color: #166534; font-weight: bold;">✔ Provisioning Successful</p>
                         <div style="font-size: 12px; color: #14532d;">
-                            <strong>ID:</strong> <span id="displayId"
-                                style="font-family: monospace; font-size: 14px;"></span><br>
-                            <strong>Key:</strong> <span id="displayKey"
-                                style="font-family: monospace; font-size: 14px;"></span>
+                            <strong>ID:</strong> <span id="displayId" style="font-family: monospace; font-size: 14px;"></span><br>
+                            <strong>Key:</strong> <span id="displayKey" style="font-family: monospace; font-size: 14px;"></span>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="panel-card p-20" style="margin-top: 20px; margin-bottom: 0;">
+                <h3 class="mt-0" style="margin-bottom: 5px;">Daily Operations</h3>
+                <p class="text-muted" style="margin-bottom: 20px;">Shop-floor time tracking and automated wage disbursement.</p>
+
+                <div style="display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;">
+                    <div>
+                        <label style="font-size: 11px; font-weight: bold; color: #475569;">MANUAL CLOCK-IN</label>
+                        <div style="display: flex; gap: 8px; width: 100%; margin-top: 5px;">
+                            <input type="text" id="attEmpId" placeholder="EMP-XXXX"
+                                style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                            <button id="clockInBtn" class="btn-secondary" style="flex-shrink: 0; width: auto;">Log Shift</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-weight: bold; color: #475569;">PROCESS SALARY</label>
+                        <div style="display: flex; gap: 8px; width: 100%; margin-top: 5px;">
+                            <input type="text" id="payrollEmpId" placeholder="EMP-XXXX"
+                                style="flex: 1; min-width: 0; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+                            <button id="runPayrollBtn" class="btn-primary"
+                                style="flex-shrink: 0; width: auto; background-color: #16a34a;">Run Payroll</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="close-hr-actions" class="btn" style="margin-top:15px;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="modal-employee-detail" class="glass-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div class="smart-modal" style="background:#fff; border-radius:16px; padding:24px; max-width:600px; width:100%;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <div>
+                    <h3 id="detail-emp-name" style="margin:0; font-size:1.2rem; color:#0f172a;">Employee Name</h3>
+                    <div id="detail-emp-id" style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">EMP-XXXX</div>
+                </div>
+                <button id="close-employee-detail" style="border:none; background:none; font-size:1.2rem; cursor:pointer; color:#94a3b8;">×</button>
+            </div>
+            <div class="detail-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+                <div class="detail-box"><span class="detail-label">System Role</span><span id="detail-box-role" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Department</span><span class="detail-value">Operations</span></div>
+                <div class="detail-box"><span class="detail-label">Current Status</span><span id="detail-box-status" class="detail-value">-</span></div>
+                <div class="detail-box"><span class="detail-label">Shift</span><span class="detail-value">Morning (8AM - 4PM)</span></div>
+            </div>
+            <label style="font-size:0.75rem; color:#64748b; margin-bottom:10px; display:block; font-weight:700; text-transform:uppercase;">Access & Permissions</label>
+            <div id="detail-rbac-container" style="display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid #e2e8f0; padding-top:16px;"></div>
         </div>
     </div>
     <script src="js/api.js"></script>
